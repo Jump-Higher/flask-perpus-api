@@ -15,7 +15,15 @@ def ok_with_meta(data, meta):
             "code": "200",
             "status": "OK",
             "data": data,
-            "meta": meta
+            "meta":  {
+                "page": meta.page,
+                "pages": meta.pages,
+                "total_count": meta.total,
+                "prev_page": meta.prev_num,
+                "next_page": meta.next_num,
+                "has_prev": meta.has_prev,
+                "has_next": meta.has_next
+            }
     }
     return make_response(jsonify(response)),HTTPStatus.OK.value
 
@@ -56,11 +64,11 @@ def bad_gateway(data):
 def forbidden(data):
     return make_response(jsonify(data)),HTTPStatus.FORBIDDEN.value
 
-def unautorized(data):
+def unautorized():
     response = {
         "code": "401",
         "status": "UNAUTHORIZED",
-        "errors": data
+        "errors": "You are Not Allowed Here"
     }
     return make_response(jsonify(response)),HTTPStatus.UNAUTHORIZED.value
 

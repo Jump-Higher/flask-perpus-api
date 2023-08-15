@@ -21,19 +21,27 @@ def select_role_id(role):
     query = db.session.query(Roles.id_role).filter_by(name = role).scalar()
     return query
 
+def super_admin_role():
+    query = select(Roles.id_role).where(Roles.name == os.getenv('SUPER_ADMIN_ROLE'))
+    result = db.session.execute(query)
+    id_role = result.scalar()
+    return id_role
+
+def admin_role():
+    query = select(Roles.id_role).where(Roles.name == os.getenv('ADMIN_ROLE'))
+    result = db.session.execute(query)
+    id_role = result.scalar()
+    return id_role
+
 # Create Roles for 1st time
 def create_roles():
     with app.app_context():
         try:
             super_admin = select_role_name('SUPER_ADMIN_ROLE')
-            admin = select_role_name('SUPER_ADMIN_ROLE')
-            user = select_role_name('SUPER_ADMIN_ROLE')
-            
-            # super_admin = Roles.query.filter_by(name=os.getenv('SUPER_ADMIN_ROLE')).first()
-            # user_role = Roles.query.filter_by(name=os.getenv('USER_ROLE')).first()
-            # admin_role = Roles.query.filter_by(name=os.getenv('ADMIN_ROLE')).first()
-            
-            if not super_admin or not admin or not user:
+            admin = select_role_name('ADMIN_ROLE')
+            user = select_role_name('USER_ROLE')
+             
+            if not super_admin and not admin and not user:
                 super_admin_role = Roles(id_role=uuid4(),name=os.getenv('SUPER_ADMIN_ROLE'))
                 admin_role = Roles(id_role=uuid4(),name=os.getenv('ADMIN_ROLE'))
                 user_role = Roles(id_role=uuid4(),name=os.getenv('USER_ROLE'))
@@ -45,3 +53,6 @@ def create_roles():
            
         except IntegrityError:
             db.session.rollback()
+        
+        except:
+            pass

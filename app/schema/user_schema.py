@@ -1,10 +1,11 @@
 from marshmallow import Schema,validate,fields
 from app.schema.roles_schema import RolesSchema
+from app.schema.address_schema import AddressSchema
 
 
 class UserSchema(Schema):
     class Meta:
-        fields = ('email','name','username','password')
+        fields = ('id_user','email','name','username','password','address', 'created_at')
         
     id_user = fields.UUID(dump_only = True)
     name = fields.Str(required = True,
@@ -34,4 +35,6 @@ class UserSchema(Schema):
     updated_at = fields.DateTime(dump_only = True)
     last_login = fields.DateTime(dump_only = True)
     id_role = fields.Nested(RolesSchema, attribute='tbl_roles', many=False, data_key='role')
+    id_address = fields.Nested(AddressSchema, attribute='tbl_addresses', many=False, data_key='address')
+    
         
