@@ -1,5 +1,5 @@
 from app import app
-from app.controllers import user, auth, authors, bookshelves, categories, publishers, roles
+from app.controllers import user, auth, authors, bookshelves, categories, publishers, roles, books
 @app.route('/')
 def home():
     return 'This is Home Page for Perpustakaan App'
@@ -41,6 +41,12 @@ app.route('/category/create', methods = ['POST'])(categories.create_category)
 app.route('/category/<id>', methods = ['GET'])(categories.category)
 app.route('/category/update/<id>', methods = ['PATCH'])(categories.update_category)
 app.route('/categories', methods = ['GET'])(categories.categories)
+
+# Books
+app.route('/book/create', methods = ['POST'])(books.create_book)
+app.route('/book/<id>', methods = ['GET'])(books.book)
+app.route('/book/update/<id>', methods = ['PATCH'])(books.update_book)
+app.route('/books', methods = ['GET'])(books.books)
 
 
 
