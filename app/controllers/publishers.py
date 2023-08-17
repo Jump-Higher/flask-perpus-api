@@ -8,7 +8,6 @@ from app import response_handler,db
 from uuid import UUID
 from app.controllers.roles import user_auth
 import os
- 
 @jwt_required()
 def create_publisher():
     try:
@@ -138,16 +137,9 @@ def publishers():
             publishers = order_by(Publishers, 'page', page, 'per_page', per_page)
              # Iterate to data
             data = []
-            for i in publishers:
-                data.append({
-                    "id_publisher" : i.id_publisher,
-                    "name" : i.name,
-                    "email" : i.email, 
-                    "phone_number" : i.phone_number,
-                    "created_at": i.created_at,
-                    "updated_at": i.updated_at
-                })
-                
+            for i in select_all(Publishers):
+                data.append(PublishersSchema().dump(i))
+ 
             return response_handler.ok_with_meta(data, publishers)
         else:
             return response_handler.unautorized()

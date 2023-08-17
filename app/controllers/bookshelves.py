@@ -134,13 +134,9 @@ def bookshelves():
             
             # Iterate to data
             data = []
-            for i in bookshelves:
-                data.append({
-                    "id_bookshelf" : i.id_bookshelf,
-                    "bookshelf" : i.bookshelf,
-                    "created_at": i.created_at,
-                    "updated_at": i.updated_at
-                })
+            for i in select_all(Bookshelves):
+                data.append(BookshelvesSchema().dump(i))
+                
                 
             return response_handler.ok_with_meta(data, bookshelves)
         else:

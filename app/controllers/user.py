@@ -3,14 +3,17 @@ from app.schema.user_schema import UserSchema
 from app.schema.roles_schema import RolesSchema
 from app.schema.address_schema import AddressSchema
 from app import response_handler,db
-from app.models.users import select_users, Users, select_by_id
+from app.models.users import  Users, select_by_id,user_all
 from app.models.roles import select_role_id, super_admin_role, admin_role
 from app.hash import hash_password
 from flask_jwt_extended import jwt_required,get_jwt_identity
 import os, cloudinary
 from uuid import uuid4
+from app.models import select_all,meta_data
 from app.models.addresses import Addresses, select_user_address
 from datetime import datetime
+from app.controllers.roles import user_auth
+from uuid import UUID
 
 def register():
     try:
@@ -21,22 +24,11 @@ def register():
         errors = user_schema.validate(json_body, partial=('name', 'username', 'email', 'password'))
         if errors:
             return response_handler.bad_request(errors)
-            
-        # iterasi tbl_user
-        list = []
-        for i in select_users():
-            list.append({
-                "username": i.username,
-                "email": i.email
-            })
-            
-        # validate if username and email is exist
-        for i in list:
-            if json_body['username'] == i['username']:
-                return response_handler.conflict('Username is Exist')
-            elif json_body['email'] == i['email']:
-                return response_handler.conflict('Email is Exist')
-        
+        else:
+            for i in select_all(Users):
+                if json_body['username'] == i.username or json_body['email'] == i.email:
+                    return response_handler.bad_request("Username or email is exist")
+          
         id_address = uuid4()
         address = Addresses(id_address = id_address)
         
@@ -63,38 +55,29 @@ def register():
     except Exception as err:
         return response_handler.bad_gateway(str(err))
 
+@jwt_required()
 def user(id):
     try:
-        # Check user is exist or not
-        select_user = select_users()
-        exist = False
-        for i in select_user:
-            if(str(i.id_user) == id):
-                exist = True
-                break
-            elif not select_user:
-                break
-        if not exist:
-            return response_handler.not_found('User Not Found')
+        current_user = get_jwt_identity()
+        if current_user['id_role'] in user_auth():
+            # Check id is UUID or not
+            UUID(id)
+            # Check user is exist or not
+            from app.models.users import select_user_id
+            users = select_user_id(id)
+            if users == None:
+                return response_handler.not_found('User not Found')
+            
+            data = {"user" : UserSchema().dump(users),
+                    "address" : AddressSchema().dump(users.address),
+                    "role" : RolesSchema().dump(users.role)}
+            
+            return response_handler.ok(data,"")
+        else:
+            return response_handler.unautorized()
         
-        # Add data user to response
-        user = select_by_id(id)
-        user_schema = UserSchema()
-        data = user_schema.dump(user)
-        
-        # Add data user roles to response
-        role = user.roles
-        role_schema = RolesSchema()
-        role_data = role_schema.dump(role)
-        data['role'] = role_data
-        
-        # Add data user address to response
-        address_schema = AddressSchema()
-        address = user.address
-        address_data = address_schema.dump(address)
-        data['address'] = address_data
-        
-        return response_handler.ok(data,"")
+    except ValueError:
+        return response_handler.bad_request("Invalid Id")
         
     except Exception as err:
         return response_handler.bad_gateway(str(err))
@@ -103,8 +86,12 @@ def user(id):
 def update_user(id):
     try:
         current_user = get_jwt_identity()
-        if current_user['id_user'] == str(id):
-            form_body = request.form
+        if current_user['id_role'] in user_auth():
+            # Check  id is UUID or not
+            UUID(id)
+            form_body = request.form 
+            
+            # Check error with schema
             user_schema = UserSchema()
             address_schema = AddressSchema()
             address_data = {'address': form_body['address']}
@@ -162,6 +149,9 @@ def update_user(id):
         else:
             return response_handler.unautorized("You are not Allowed here")
 
+    except ValueError:
+        return response_handler.bad_request("Invalid Id")
+    
     except KeyError as err:
         return response_handler.bad_request(f'{err.args[0]} field must be filled')
     
@@ -175,56 +165,24 @@ def list_user():
         admin = admin_role()
         current_user = get_jwt_identity()
         if current_user['id_role'] == str(super_admin) or current_user['id_role'] == str(admin):
+             # Get param from url
             page = request.args.get('page', 1, type=int)
-            per_page = request.args.get('per_page', 5, type=int )
-            total_user = Users.query.count()
-            if not per_page:
-                per_page = total_user
-
-        
-            total_page = (total_user-1+per_page)//per_page
-            if (page <= 0 or page > total_page ):
-                response= {
-                    "code": "404",
-                    "status": "NOT_FOUND",
-                    "errors": "page cannot negative value or more than total page",
-                    "data": {
-                        "total_page": total_page
-                    }
-                }
-                return response_handler.not_found(response)
-
-            user = Users.query.order_by(Users.created_at.desc()).paginate(page = page, per_page = per_page)
+            per_page = request.args.get('per_page', int(os.getenv('PER_PAGE')), type=int)
+            
+            # Check is page exceed or not
+            page_exceeded = meta_data(Users,page,per_page)
+            if page_exceeded: 
+                return response_handler.not_found("Page Not Found")
+            # Query data bookshelves all
+            meta = user_all('page', page, 'per_page', per_page)
             data = []
-            for i in user.items:
+            for i in meta.items:
                 data.append({
-                    "id_user": i.id_user,
-                    "name": i.name,
-                    "username": i.username,
-                    "email": i.email,
-                    "password": i.password,
-                    "picture" : i.picture,
-                    "status" : i.status,
-                    "created_at" : i.created_at,
-                    "updated_at" : i.updated_at,
-                    "address":{
-                        "id_address": i.address.id_address,
-                        "address": i.address.address
-                    },
-                    "role":{
-                        "id_role": i.roles.id_role,
-                        "role": i.roles.name
-                    }
+                    "user" : UserSchema().dump(i),
+                    "address" : AddressSchema().dump(i.address),
+                    "role" : RolesSchema().dump(i.role)
                 })
-            meta = {
-                "page": user.page,
-                "pages": user.pages,
-                "total_count": user.total,
-                "prev_page": user.prev_num,
-                "next_page": user.next_num,
-                "has_prev": user.has_prev,
-                "has_next": user.has_next
-            }
+                
             return response_handler.ok_with_meta(data,meta)
         else:
             return response_handler.unautorized("You are not Allowed here")

@@ -16,7 +16,7 @@ class Users(db.Model):
     password = db.Column(db.String(50), nullable = False)
     picture = db.Column(db.String(200))
     status = db.Column(db.Boolean, default = False)
-    roles = db.relationship('Roles', backref='tbl_users', uselist = False)
+    role = db.relationship('Roles', backref='tbl_users', uselist = False)
     id_role = db.Column(UUID(as_uuid=True), db.ForeignKey('tbl_roles.id_role'))
     address = db.relationship('Addresses', backref='tbl_users', uselist = False)
     id_address = db.Column(UUID(as_uuid=True), db.ForeignKey('tbl_addresses.id_address'))
@@ -37,7 +37,26 @@ def select_users():
 def select_by_id(id_user):
     select_user = Users.query.get(id_user)
     return select_user
- 
+
+def user_all(page_name,page_value,per_page_name,per_page_value):
+        query = (
+            Users.query
+            .join(Addresses, Users.id_address == Addresses.id_address)
+            .join(Roles, Users.id_role == Roles.id_role)
+            .order_by(Users.created_at.desc())
+            .paginate(**{page_name : page_value, per_page_name : per_page_value})
+        ) 
+        return query
+    
+def select_user_id(id):
+    query = (Users.query
+             .join(Addresses, Users.id_address == Addresses.id_address)
+             .join(Roles, Users.id_role == Roles.id_role)
+             .filter(Users.id_user == id)
+             .first())
+    return query
+    
+
 def create_super_admin():
     with app.app_context():
         try:

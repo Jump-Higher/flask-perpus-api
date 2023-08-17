@@ -1,12 +1,9 @@
 from marshmallow import Schema,validate,fields
 from app.schema.roles_schema import RolesSchema
 from app.schema.address_schema import AddressSchema
-
-
+ 
 class UserSchema(Schema):
-    class Meta:
-        fields = ('id_user','email','name','username','password','address', 'created_at')
-        
+    
     id_user = fields.UUID(dump_only = True)
     name = fields.Str(required = True,
                           validate = [
@@ -29,12 +26,12 @@ class UserSchema(Schema):
                                     error='Password must containat least one lowercase letter, one uppercase latter, one digit, and one special character.'
                               )
                               ])
+    id_role = fields.Nested(RolesSchema, attribute='tbl_roles', many=False, data_key='role')
+    id_address = fields.Nested(AddressSchema, attribute='tbl_addresses', many=False, data_key='address')
     picture = fields.Str(validate=validate.Length(max=200))
     is_active = fields.Boolean()
     created_at = fields.DateTime(dump_only = True)
     updated_at = fields.DateTime(dump_only = True)
     last_login = fields.DateTime(dump_only = True)
-    id_role = fields.Nested(RolesSchema, attribute='tbl_roles', many=False, data_key='role')
-    id_address = fields.Nested(AddressSchema, attribute='tbl_addresses', many=False, data_key='address')
     
         

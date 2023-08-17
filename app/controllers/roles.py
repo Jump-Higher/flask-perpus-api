@@ -141,14 +141,9 @@ def roles():
             
             # Iterate to data
             data = []
-            for i in roles:
-                data.append({
-                    "id_role" : i.id_role,
-                    "name" : i.name,
-                    "created_at": i.created_at,
-                    "updated_at": i.updated_at
-                })
-                
+            for i in select_all(Roles):
+                data.append(RolesSchema().dump(i))
+ 
             return response_handler.ok_with_meta(data, roles)
         else:
             return response_handler.unautorized()

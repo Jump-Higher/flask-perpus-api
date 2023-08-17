@@ -134,17 +134,13 @@ def categories():
             
             # Iterate to data
             data = []
-            for i in categories:
-                data.append({
-                    "id_category" : i.id_category,
-                    "category" : i.category,
-                    "created_at": i.created_at,
-                    "updated_at": i.updated_at
-                })
-                
+            for i in select_all(Categories):
+                data.append(CategoriesSchema().dump(i))
+ 
             return response_handler.ok_with_meta(data, categories)
         else:
             return response_handler.unautorized()
         
     except Exception as err:
         return response_handler.bad_request(err)
+ 

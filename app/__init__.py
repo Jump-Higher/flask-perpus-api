@@ -1,5 +1,5 @@
 from flask import Flask
-from app.config import Db_config
+from config import Db_config
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from app.prefix_middleware import PrefixMiddleware

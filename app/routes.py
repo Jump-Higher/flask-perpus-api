@@ -47,6 +47,5 @@ app.route('/book/create', methods = ['POST'])(books.create_book)
 app.route('/book/<id>', methods = ['GET'])(books.book)
 app.route('/book/update/<id>', methods = ['PATCH'])(books.update_book)
 app.route('/books', methods = ['GET'])(books.books)
-
-
+ 
 

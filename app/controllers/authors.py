@@ -140,17 +140,9 @@ def authors():
             authors = order_by(Authors, 'page', page, 'per_page', per_page)
              # Iterate to data
             data = []
-            for i in authors:
-                data.append({
-                    "id_author" : i.id_author,
-                    "name" : i.name,
-                    "email" : i.email,
-                    "gender" : i.gender,
-                    "phone_number" : i.phone_number,
-                    "created_at": i.created_at,
-                    "updated_at": i.updated_at
-                })
-                
+            for i in select_all(Authors):
+                data.append(AuthorsSchema().dump(i))
+                 
             return response_handler.ok_with_meta(data, authors)
         else:
             return response_handler.unautorized()

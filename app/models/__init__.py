@@ -1,6 +1,12 @@
 from app import db
 from sqlalchemy import select
 from app.models.roles import Roles
+from app.models.authors import Authors
+from app.models.publishers import Publishers
+from app.models.categories import Categories
+from app.models.bookshelves import Bookshelves
+from app.models.books import Books
+
 import os
 
 def select_all(model):
@@ -10,6 +16,9 @@ def select_all(model):
 def select_by_id(model,id):
     query = model.query.get(id)
     return query
+
+
+
 
 def select_users_role(role):
     query = select(Roles.id_role).where(Roles.name == os.getenv(role))
@@ -30,3 +39,6 @@ def meta_data(model,page,per_page):
     total = (data - 1 + per_page)//per_page
     if page <= 0 or page > total:
         return data
+    
+
+
