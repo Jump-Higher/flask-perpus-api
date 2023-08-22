@@ -16,6 +16,10 @@ def user_auth():
                             select_users_role('ADMIN_ROLE')})
     return authorized_roles
 
+def user_auth_user():
+    authorized_roles = str({select_users_role('USER_ROLE')})
+    return authorized_roles
+
 @jwt_required()
 def create_role():
     try: 

@@ -27,11 +27,11 @@ def login():
         db.session.commit()
         data = generate_token({"id_user":user.id_user,
                                 "id_role":user.id_role, 
-                                "role":user.roles.name}
+                                "role":user.role.name}
                               )
         user = {"id_user": user.id_user,
                 "id_role": user.id_role,
-                "role": user.roles.name,
+                "role": user.role.name,
                 "status": user.status}
         data['data'] = user
         # decode token

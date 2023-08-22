@@ -1,9 +1,8 @@
-from marshmallow import Schema, fields, validate, ValidationError,validates
-import re
+from marshmallow import Schema, fields, validate
 
 class AuthorsSchema(Schema):
-    class Meta:
-        fields = ('id_author','name','email', 'gender','phone_number','created_at','updated_at')  
+    # class Meta:
+    #     fields = ('id_author','name','email', 'gender','phone_number','created_at','updated_at')  
          
     id_author = fields.UUID(dump_only=True)
     name = fields.Str(required=True, validate=validate.Length(min=2, max=100))

@@ -26,17 +26,17 @@ class Users(db.Model):
     
 
 def select_super_admin_user(id_role):
-    select_user = Users.query.filter_by(id_role = id_role).first()
-    return select_user
+    query = Users.query.filter_by(id_role = id_role).first()
+    return query
 
 def select_users():
-    select_users = Users.query.all()
-    return select_users
+    query = Users.query.all()
+    return query
 
 # object
 def select_by_id(id_user):
-    select_user = Users.query.get(id_user)
-    return select_user
+    query = Users.query.get(id_user)
+    return query
 
 def user_all(page_name,page_value,per_page_name,per_page_value):
         query = (

@@ -1,5 +1,5 @@
 from app import app
-from app.controllers import user, auth, authors, bookshelves, categories, publishers, roles, books
+from app.controllers import user, user_transaction, admin_transaction, auth, authors, bookshelves, categories, publishers, roles, books
 @app.route('/')
 def home():
     return 'This is Home Page for Perpustakaan App'
@@ -47,5 +47,19 @@ app.route('/book/create', methods = ['POST'])(books.create_book)
 app.route('/book/<id>', methods = ['GET'])(books.book)
 app.route('/book/update/<id>', methods = ['PATCH'])(books.update_book)
 app.route('/books', methods = ['GET'])(books.books)
+
+# Carts
+app.route('/cart/add/<id>', methods = ['POST'])(user_transaction.create_cart)
+app.route('/carts', methods = ['GET'])(user_transaction.carts)
+app.route('/cart/checkout/<id>', methods = ['POST'])(user_transaction.co_cart)
+app.route('/cart/delete/<id>', methods = ['DELETE'])(user_transaction.delete_cart)
+
+# Admin transaction
+app.route('/booked-books', methods=['GET'])(admin_transaction.booked_books)
+app.route('/acc/booked-books/<id>', methods=['PATCH'])(admin_transaction.acc_book)
+app.route('/returns', methods=['GET'])(admin_transaction.return_books)
+app.route('/return', methods=['POST'])(admin_transaction.create_return)
+
+
  
 

@@ -19,7 +19,7 @@ jwt = JWTManager(app)
 # URL prefix
 app.wsgi_app = PrefixMiddleware(app.wsgi_app, prefix='/perpus-api/v1')
 
-from app.models import roles, users, authors, books, bookshelves, borrows, borrow_details, categories, publishers, returns, return_details
+from app.models import roles, users, cart, authors, books, bookshelves, borrows, borrow_details, categories, publishers, returns, return_details
 
 # Create Roles
 from app.models.roles import create_roles

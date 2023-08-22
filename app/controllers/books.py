@@ -20,7 +20,7 @@ def create_book():
         current_user = get_jwt_identity()
         if current_user['id_role'] in user_auth(): 
             form_body = request.form
-            
+              
             # Checking errors with schema
             schema = BooksSchema() 
             errors = schema.validate(form_body)
@@ -28,7 +28,7 @@ def create_book():
                 return response_handler.bad_request(errors)
             else:
                 for i in select_all(Books):
-                    if form_body['title'] == i.title and form_body['id_author'] == i.id_author:
+                    if form_body['title'] == i.title and form_body['id_author'] == str(i.id_author):
                         return response_handler.conflict('Book is Exist')
             
             id_book = uuid4()
@@ -60,6 +60,7 @@ def create_book():
             db.session.commit()
         
             data = schema.dump(new_book)
+             
             return response_handler.created(data,"Book Successfull Created ")
         else:
             return response_handler.unautorized()

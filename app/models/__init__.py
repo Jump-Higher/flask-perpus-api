@@ -16,10 +16,7 @@ def select_all(model):
 def select_by_id(model,id):
     query = model.query.get(id)
     return query
-
-
-
-
+ 
 def select_users_role(role):
     query = select(Roles.id_role).where(Roles.name == os.getenv(role))
     result = db.session.execute(query)
