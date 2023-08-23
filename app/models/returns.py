@@ -26,9 +26,24 @@ def select_notin_borrow(page_name,page_value,per_page_name,per_page_value):
     query = (
         BorrowDetails.query
         .join(Borrows, BorrowDetails.id_borrow == Borrows.id_borrow)
+        .filter_by(status = True)
         .outerjoin(subquery, BorrowDetails.id_borrow == subquery.c.id_borrow)
         .filter(subquery.c.id_borrow.is_(None)) 
         .paginate(**{page_name : page_value, per_page_name : per_page_value})
     ) 
     return query
+
+def limit_borrow(id):
     
+    subquery = (
+        select(Returns.id_borrow)
+        .subquery()
+    )
+    query = (
+        Borrows.query
+        .filter_by(status = True, id_user = id)
+        .outerjoin(subquery, Borrows.id_borrow == subquery.c.id_borrow)
+        .filter(subquery.c.id_borrow.is_(None)) 
+    )
+    count = query.count()
+    return count

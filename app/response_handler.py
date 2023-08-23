@@ -72,6 +72,14 @@ def unautorized():
     }
     return make_response(jsonify(response)),HTTPStatus.UNAUTHORIZED.value
 
+def unautorized_login():
+    response = {
+        "code": "401",
+        "status": "UNAUTHORIZED",
+        "errors": "Wrong username or password"
+    }
+    return make_response(jsonify(response)),HTTPStatus.UNAUTHORIZED.value
+
 def not_found(data):
     response = {
         "code": "404",

@@ -21,7 +21,7 @@ def login():
             return response_handler.not_found("Username not found")
         
         if hash_password(json_body['password']) != user.password:
-            return response_handler.unautorized('Login failed, please check your password again')
+            return response_handler.unautorized_login()
         
         user.last_login = datetime.now()
         db.session.commit()

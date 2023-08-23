@@ -1,4 +1,3 @@
-
 from app.models import select_users_role
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models import select_by_id, select_all, filter_by, meta_data, order_by

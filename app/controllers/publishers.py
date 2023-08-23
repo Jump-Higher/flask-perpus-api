@@ -1,4 +1,3 @@
-
 from flask_jwt_extended import jwt_required, get_jwt_identity 
 from app.models import select_all, select_by_id, filter_by, meta_data, order_by
 from app.models.publishers import Publishers
@@ -8,6 +7,7 @@ from app import response_handler,db
 from uuid import UUID
 from app.controllers.roles import user_auth
 import os
+
 @jwt_required()
 def create_publisher():
     try:

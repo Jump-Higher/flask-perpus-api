@@ -1,7 +1,7 @@
 from app import db
 import uuid, os
 from sqlalchemy.dialects.postgresql import UUID
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta 
 
 class Borrows(db.Model):
     __tablename__ = 'tbl_borrows'
@@ -22,6 +22,8 @@ def select_all(page_name,page_value,per_page_name,per_page_value):
         .paginate(**{page_name : page_value, per_page_name : per_page_value})
     )
     return query
+
+
 
  
      
