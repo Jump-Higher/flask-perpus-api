@@ -120,10 +120,34 @@ def create_return():
         if current_user['id_role'] in user_auth():
             json_body = request.json
             
+            # Check id valid or not 
+            UUID(json_body['id_user'])
+            UUID(json_body['id_borrow'])
+            UUID(json_body['id_book'])
+            
+            # Check the book is already return or not
             for i in select_all(Returns):
                 if json_body['id_borrow'] == str(i.id_borrow):
-                    return response_handler.bad_request("Book already returned")
-                
+                    return response_handler.conflict("Book already returned")
+            
+            # Check is there any transaction or not
+            data = []
+            for i in select_all(BorrowDetails):
+                data.append({
+                    "id_borrow" : i.id_borrow,
+                    "id_book": i.id_book,
+                    "id_user": i.borrow.id_user
+                })
+            match = False
+            for i in data:
+                if (i['id_borrow'] == json_body['id_borrow'] and
+                   i['id_book'] == json_body['id_book'] and
+                   i['id_user'] == json_body['id_user']): 
+                    match = True
+                    break
+            if not match:
+                return response_handler.not_found("Transaction not found")
+            
             id_return = uuid4()
             new_return = Returns(id_return = id_return,
                                 id_user = json_body['id_user'],
@@ -140,6 +164,9 @@ def create_return():
             return response_handler.ok("","Book success returned")
         else:
             return response_handler.unautorized()
-        
+    
+    except ValueError:
+        return response_handler.bad_request("Invalid Id")
+    
     except Exception as err:
         return response_handler.bad_gateway(err)

@@ -33,8 +33,7 @@ def select_notin_borrow(page_name,page_value,per_page_name,per_page_value):
     ) 
     return query
 
-def limit_borrow(id):
-    
+def limit_borrow(id): 
     subquery = (
         select(Returns.id_borrow)
         .subquery()

@@ -26,15 +26,18 @@ def create_author():
                     if json_body['name'] == i.name:
                         return response_handler.bad_request("Author is Exist")
             
+            # Create Author object
             new_author = Authors(name = json_body['name'],
                                 email = json_body['email'],
                                 gender = json_body['gender'],
                                 phone_number = json_body['phone_number'],
                                 )
-
+            
+            # Add author object to db
             db.session.add(new_author)
             db.session.commit()
-        
+
+            # Add object to schema
             data = schema.dump(new_author)
             return response_handler.created(data,"Author Successfull Created ")
         else:
@@ -58,7 +61,7 @@ def author(id):
             if author == None:
                 return response_handler.not_found('Author not Found')
             
-            # Add data to response 
+            # Add data to schema 
             schema = AuthorsSchema()
             data = schema.dump(author)
             
@@ -90,7 +93,7 @@ def update_author(id):
             # Check Author if not exist
             authors = select_by_id(Authors,id)
             if authors == None:
-                return response_handler.not_found('Bookshelves not Found')
+                return response_handler.not_found('Author not Found')
             
             # Check data of author same with previous or not 
             if all(json_body[field] == getattr(authors, field) for field in ['name','email','gender','phone_number']):
@@ -108,6 +111,7 @@ def update_author(id):
                 authors.phone_number = json_body['phone_number']
                 db.session.commit()
                 
+                # Add author to schema
                 data = schema.dump(authors)
                  
                 return response_handler.ok(data, "Author successfull updated")
@@ -136,9 +140,9 @@ def authors():
             if page_exceeded: 
                 return response_handler.not_found("Page Not Found") 
             
-            # Query data authors all
+            # add data from model
             authors = order_by(Authors, 'page', page, 'per_page', per_page)
-             # Iterate to data
+            # Iterate to data
             data = []
             for i in select_all(Authors):
                 data.append(AuthorsSchema().dump(i))
