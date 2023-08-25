@@ -1,9 +1,9 @@
 from flask import request
-from app.schema.user_schema import UserSchema
+from app.schema.user_schema import UserSchema, PasswordSchema
 from app.schema.roles_schema import RolesSchema
 from app.schema.address_schema import AddressSchema
-from app import response_handler,db
-from app.models.users import  Users, select_by_id,user_all
+from app import response_handler,db,secret_key
+from app.models.users import  Users, select_by_id,user_all, select_user_email
 from app.models.roles import select_role_id, super_admin_role, admin_role
 from app.hash import hash_password
 from flask_jwt_extended import jwt_required,get_jwt_identity
@@ -13,7 +13,10 @@ from app.models import select_all,meta_data
 from app.models.addresses import Addresses, select_user_address
 from datetime import datetime
 from app.controllers.roles import user_auth
+from app.controllers import generate_reset_token, send_email, reset_password_body
 from uuid import UUID
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
+
 
 def register():
     try:
@@ -188,4 +191,51 @@ def list_user():
             return response_handler.unautorized("You are not Allowed here")
     except Exception as err:
         return response_handler.bad_gateway(str(err))
- 
+  
+def reset_password(email):
+    try:
+        user = select_user_email(email) 
+        if user == None:
+            return response_handler.bad_request("User not found")
+        
+        # Generate Token
+        token = generate_reset_token(email)
+        # Replace . with | 
+        real_token = token.replace('.','|')
+        # Add html url
+        reset_url = os.getenv('RESET_PASSWORD_FE')+'/'+real_token
+        reset_body = reset_password_body(reset_url,user.name)
+        
+        #Send mail
+        send_email(email,"Reset Password",reset_body)
+        
+        return response_handler.ok("","Please check your email to reset your password")
+    except Exception as err:
+        return response_handler.bad_gateway(str(err))
+
+def change_password(token):
+    try:
+        json_body = request.json
+        serializer = URLSafeTimedSerializer(secret_key)
+        reset_token = token.replace('|','.')
+        email = serializer.loads(reset_token, max_age=os.getenv('MAX_AGE_MAIL'))  # Token expires after 1 hour (3600 seconds)
+        user = select_user_email(email)
+        if user:
+            password_schema = PasswordSchema()
+            errors = password_schema.validate(json_body)
+            if errors:
+                return response_handler.bad_request(errors)
+            user.password = hash_password(json_body['password'])
+            db.session.commit()
+            return response_handler.ok("","Your password success to change")
+        else:
+            return response_handler.not_found("Account not found")
+    except SignatureExpired:
+        return response_handler.unautorized("Your Token is Expired")
+    except BadSignature:
+        return response_handler.bad_request("Your Token is Invalid")
+    except Exception as err:
+        return response_handler.bad_gateway(str(err))
+
+def account_activated():
+    pass

@@ -51,8 +51,7 @@ def conflict(data):
         "errors": data
     }
     return make_response(jsonify(response)),HTTPStatus.CONFLICT.value
-
-
+ 
 def bad_gateway(data):
     response = {
         "code": "500",

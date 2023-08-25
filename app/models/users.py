@@ -55,8 +55,13 @@ def select_user_id(id):
              .filter(Users.id_user == id)
              .first())
     return query
-    
 
+def select_user_email(email):
+    query = (Users.query
+             .filter_by(email = email)
+             .first())
+    return query
+     
 def create_super_admin():
     with app.app_context():
         try:

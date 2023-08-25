@@ -34,4 +34,15 @@ class UserSchema(Schema):
     updated_at = fields.DateTime(dump_only = True)
     last_login = fields.DateTime(dump_only = True)
     
+class PasswordSchema(Schema):
+      password = fields.Str(required = True,
+                              validate =[
+                                    validate.Length(min=8),
+                                    validate.Regexp(
+                                    r'^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\W).*$',
+                                    error='Password must containat least one lowercase letter, one uppercase latter, one digit, and one special character.'
+                              )
+                              ])
+      
+    
         
