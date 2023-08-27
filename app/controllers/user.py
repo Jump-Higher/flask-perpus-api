@@ -13,7 +13,7 @@ from app.models import select_all,meta_data
 from app.models.addresses import Addresses, select_user_address
 from datetime import datetime
 from app.controllers.roles import user_auth
-from app.controllers import generate_reset_token, send_email, reset_password_body
+from app.controllers import generate_token, send_email, reset_password_body, activation_body
 from uuid import UUID
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 
@@ -192,18 +192,20 @@ def list_user():
     except Exception as err:
         return response_handler.bad_gateway(str(err))
   
-def reset_password(email):
+def reset_password():
     try:
+        json_body = request.json
+        email = json_body['email']
         user = select_user_email(email) 
         if user == None:
             return response_handler.bad_request("User not found")
         
         # Generate Token
-        token = generate_reset_token(email)
+        token = generate_token(email)
         # Replace . with | 
-        real_token = token.replace('.','|')
+        reset_token = token.replace('.','|')
         # Add html url
-        reset_url = os.getenv('RESET_PASSWORD_FE')+'/'+real_token
+        reset_url = os.getenv('RESET_PASSWORD_FE')+'/'+reset_token
         reset_body = reset_password_body(reset_url,user.name)
         
         #Send mail
@@ -237,5 +239,30 @@ def change_password(token):
     except Exception as err:
         return response_handler.bad_gateway(str(err))
 
-def account_activated():
-    pass
+@jwt_required()
+def activation_email():
+    try:
+        current_user = get_jwt_identity()
+        user = select_by_id(current_user['id_user'])
+        token = generate_token(user.email)
+        activation_token = token.replace('.','|')
+        # Add html url
+        activation_url = os.getenv('ACTIVATION_ACC_FE')+'/'+activation_token
+        activate_body = activation_body(activation_url,user.username)
+        #Send mail
+        send_email(user.email,"Activation Account",activate_body)
+        
+        return response_handler.ok("","Please check your email to activate your account")
+    except Exception as err:
+        return response_handler.bad_gateway(str(err))
+
+@jwt_required()
+def activation_account(token): 
+    serializer = URLSafeTimedSerializer(secret_key)
+    activation_token = token.replace('|','.')
+    email = serializer.loads(activation_token, max_age=os.getenv('MAX_AGE_MAIL'))  # Token expires after 1 hour (3600 seconds)
+    user = select_user_email(email)
+    user.status = True
+    db.session.commit()
+    return response_handler.ok("","Your Account success to activate")
+    

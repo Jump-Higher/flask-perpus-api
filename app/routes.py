@@ -11,8 +11,11 @@ app.route('/register', methods = ['POST'])(user.register)
 app.route('/user/<id>', methods = ['GET'])(user.user)
 app.route('/user/update/<id>', methods = ['PATCH'])(user.update_user)
 app.route('/users', methods = ['GET'])(user.list_user)
-app.route('/user/reset_password/<email>', methods = ['POST'])(user.reset_password)
+app.route('/user/reset_password', methods = ['POST'])(user.reset_password)
 app.route('/user/change_password/<token>', methods = ['PATCH'])(user.change_password)
+app.route('/user/activation_email', methods = ['POST'])(user.activation_email)
+app.route('/user/activation_account/<token>', methods = ['PATCH'])(user.activation_account)
+
 
 # Roles
 app.route('/role/create', methods = ['POST'])(roles.create_role)
