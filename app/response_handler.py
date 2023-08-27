@@ -40,7 +40,7 @@ def bad_request(data):
     response = {
         "code": "400",
         "status": "BAD_REQUEST",
-        "errors": data
+        "message": data
     }
     return make_response(jsonify(response)),HTTPStatus.BAD_REQUEST.value
 
@@ -48,7 +48,7 @@ def conflict(data):
     response = {
         "code": "409",
         "status": "CONFLICT",
-        "errors": data
+        "message": data
     }
     return make_response(jsonify(response)),HTTPStatus.CONFLICT.value
  
@@ -56,7 +56,7 @@ def bad_gateway(data):
     response = {
         "code": "500",
         "status": "BAD_GATEWAY",
-        "errors": data
+        "message": data
     }
     return make_response(jsonify(response)),HTTPStatus.BAD_GATEWAY.value
 
@@ -67,7 +67,7 @@ def unautorized():
     response = {
         "code": "401",
         "status": "UNAUTHORIZED",
-        "errors": "You are Not Allowed Here"
+        "message": "You are Not Allowed Here"
     }
     return make_response(jsonify(response)),HTTPStatus.UNAUTHORIZED.value
 
@@ -75,7 +75,7 @@ def unautorized_login():
     response = {
         "code": "401",
         "status": "UNAUTHORIZED",
-        "errors": "Wrong username or password"
+        "message": "Wrong username or password"
     }
     return make_response(jsonify(response)),HTTPStatus.UNAUTHORIZED.value
 
@@ -83,6 +83,6 @@ def not_found(data):
     response = {
         "code": "404",
         "status": "NOT_FOUND",
-        "errors": data
+        "message": data
     }
     return make_response(jsonify(response)),HTTPStatus.NOT_FOUND.value
