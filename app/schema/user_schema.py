@@ -7,19 +7,25 @@ class UserSchema(Schema):
     id_user = fields.UUID(dump_only = True)
     name = fields.Str(required = True,
                           validate = [
+                                validate.Length(min=1, error='Name must be filled'),
                                 validate.Length(min=2, max=100),
                                 validate.Regexp(r'^[a-zA-Z\s]+$',
                                           error='Invalid name format, Only letters and space are allowed.')
                           ])
     username = fields.Str(required = True,
                               validate = [
+                                    validate.Length(min=1, error='Username must be filled'),
                                     validate.Length(min=4, max=12,
                                     error='Username must be between 4 and 12 characters.')
                               ])
     email = fields.Email(required = True,
-                             validate = validate.Email(error = 'Invalid email format'))
+                             validate =[
+                              validate.Length(min=1,error='Email must be filled'),
+                              validate.Email(error = 'Invalid email format')
+                             ])
     password = fields.Str(required = True,
                               validate =[
+                                    validate.Length(min=1, error='Password must be filled'),
                                     validate.Length(min=8),
                                     validate.Regexp(
                                     r'^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\W).*$',

@@ -62,7 +62,7 @@ def register():
 def user(id):
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth():
+        if current_user['id_role'] in user_auth() or current_user['id_user'] == str(id):
             # Check id is UUID or not
             UUID(id)
             # Check user is exist or not
