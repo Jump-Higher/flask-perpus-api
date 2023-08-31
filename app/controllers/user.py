@@ -88,23 +88,28 @@ def user(id):
 @jwt_required()  
 def update_user(id):
     try:
+        
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth():
+        if current_user['id_user'] == id:
             # Check  id is UUID or not
             UUID(id)
-            form_body = request.form 
+            form_body = request.form
             
-            # Check error with schema
-            user_schema = UserSchema()
-            address_schema = AddressSchema()
+            user_data = {'username':form_body['username'],
+                    'email':form_body['email'],
+                    'password':form_body['password'],
+                    'name':form_body['name']}
             address_data = {'address': form_body['address']}
             
-            # Checking Error with schema
-            errors = user_schema.validate(form_body) 
+            # Check error with schema
+            user_schema = UserSchema(only=['username','name','email','password'])
+            address_schema = AddressSchema()
+
+            user_errors = user_schema.validate(user_data)
             address_errors = address_schema.validate(address_data)
-            if errors:
-                return response_handler.bad_request(errors)
-            elif address_errors:
+            if user_errors: 
+                return response_handler.bad_request(user_errors)
+            if address_errors:
                 return response_handler.bad_request(address_errors)
             
             # Select user by id
@@ -150,12 +155,12 @@ def update_user(id):
             
             return response_handler.ok("", "Your data is updated")
         else:
-            return response_handler.unautorized("You are not Allowed here")
+            return response_handler.unautorized()
 
     except ValueError:
         return response_handler.bad_request("Invalid Id")
     
-    except KeyError as err:
+    except KeyError as err: 
         return response_handler.bad_request(f'{err.args[0]} field must be filled')
     
     except Exception as err:
@@ -247,7 +252,8 @@ def activation_email():
         token = generate_token(user.email)
         activation_token = token.replace('.','|')
         # Add html url
-        activation_url = os.getenv('ACTIVATION_ACC_FE')+'/'+activation_token
+        #activation_url = os.getenv('ACTIVATION_ACC_FE')+'/'+activation_token
+        activation_url = "www.yahoo.com"
         activate_body = activation_body(activation_url,user.username)
         #Send mail
         send_email(user.email,"Activation Account",activate_body)
