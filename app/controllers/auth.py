@@ -12,7 +12,7 @@ def login():
         if json_body['username'] =="":
             return response_handler.bad_request("Username must be filled")
         
-        if json_body['password'] =="":
+        elif json_body['password'] =="":
             return response_handler.bad_request("Password must be filled")
         
         user = Users.query.filter_by(username = json_body['username']).first()
@@ -21,13 +21,14 @@ def login():
             return response_handler.not_found("Username not found")
         
         if hash_password(json_body['password']) != user.password:
-            return response_handler.unautorized_login()
+            return response_handler.unautorized_with_message("Invalid password, please check your password again")
         
         user.last_login = datetime.now()
         db.session.commit()
         data = generate_token({"id_user":user.id_user,
                                 "id_role":user.id_role, 
-                                "role":user.role.name}
+                                "role":user.role.name,
+                                "status": user.status}
                               )
         user = {"id_user": user.id_user,
                 "id_role": user.id_role,

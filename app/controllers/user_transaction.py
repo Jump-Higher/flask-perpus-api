@@ -56,12 +56,13 @@ def create_cart(id):
     except Exception as err:
         return response_handler.bad_gateway(str(err))
 
-
 @jwt_required()
 def borrow(id):
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth_user():
+        if current_user['status'] is False:
+            return response_handler.unautorized_with_message("Please activate your account to borrow book")
+        elif current_user['id_role'] in user_auth_user() and current_user['status'] is True:
             # Check id is UUID or not
             UUID(id)
             
@@ -107,6 +108,7 @@ def borrow(id):
 
     except Exception as err:
         return response_handler.bad_gateway(str(err))
+    
 @jwt_required()
 def co_cart(id):
     try:

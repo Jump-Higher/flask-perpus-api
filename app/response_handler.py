@@ -71,11 +71,11 @@ def unautorized():
     }
     return make_response(jsonify(response)),HTTPStatus.UNAUTHORIZED.value
 
-def unautorized_login():
+def unautorized_with_message(data):
     response = {
         "code": "401",
         "status": "UNAUTHORIZED",
-        "message": "Wrong username or password"
+        "message": data
     }
     return make_response(jsonify(response)),HTTPStatus.UNAUTHORIZED.value
 

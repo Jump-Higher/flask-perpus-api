@@ -24,7 +24,7 @@ def register():
         user_schema = UserSchema()
         
         # checking errors with schema
-        errors = user_schema.validate(json_body, partial=('name', 'username', 'email', 'password'))
+        errors = user_schema.validate(json_body)
         if errors:
             return response_handler.bad_request(errors)
         else:
@@ -262,14 +262,16 @@ def activation_email():
         return response_handler.ok("","Please check your email to activate your account")
     except Exception as err:
         return response_handler.bad_gateway(str(err))
-
-@jwt_required()
-def activation_account(token): 
-    serializer = URLSafeTimedSerializer(secret_key)
-    activation_token = token.replace('|','.')
-    email = serializer.loads(activation_token, max_age=os.getenv('MAX_AGE_MAIL'))  # Token expires after 1 hour (3600 seconds)
-    user = select_user_email(email)
-    user.status = True
-    db.session.commit()
-    return response_handler.ok("","Your Account success to activate")
-    
+ 
+def activation_account(token):
+    try: 
+        serializer = URLSafeTimedSerializer(secret_key)
+        activation_token = token.replace('|','.')
+        email = serializer.loads(activation_token, max_age=os.getenv('MAX_AGE_MAIL'))  # Token expires after 1 hour (3600 seconds)
+        user = select_user_email(email)
+        user.status = True
+        db.session.commit()
+        return response_handler.ok("","Your Account success to activate")
+    except Exception as err:
+        return response_handler.bad_gateway(str(err))
+        
