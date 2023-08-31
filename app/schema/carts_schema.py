@@ -1,5 +1,3 @@
-
-
 from marshmallow import Schema,validate,fields
 from app.schema.user_schema import UserSchema
 from app.schema.books_schema import BooksSchema

@@ -1,5 +1,3 @@
- 
-
 from marshmallow import Schema, fields, validate
 from app.schema.authors_schema import AuthorsSchema
 from app.schema.publishers_schema import PublishersSchema
