@@ -95,6 +95,7 @@ def update_user(id):
             UUID(id)
             form_body = request.form
             
+            # Select formbody to check
             user_data = {'username':form_body['username'],
                     'email':form_body['email'],
                     'password':form_body['password'],
