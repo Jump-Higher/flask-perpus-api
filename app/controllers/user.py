@@ -1,15 +1,15 @@
 from flask import request
-from app.schema.user_schema import UserSchema, PasswordSchema
+from app.schema.user_schema import UserSchema, PasswordSchema, EmailSchema
 from app.schema.roles_schema import RolesSchema
 from app.schema.address_schema import AddressSchema
 from app import response_handler,db,secret_key
-from app.models.users import  Users, select_by_id,user_all, select_user_email
+from app.models.users import  Users, user_all, select_user_email
 from app.models.roles import select_role_id, super_admin_role, admin_role
 from app.hash import hash_password
 from flask_jwt_extended import jwt_required,get_jwt_identity
 import os, cloudinary
 from uuid import uuid4
-from app.models import select_all,meta_data
+from app.models import select_all,meta_data,select_by_id, filter_by
 from app.models.addresses import Addresses, select_user_address
 from datetime import datetime
 from app.controllers.roles import user_auth
@@ -23,14 +23,16 @@ def register():
         json_body = request.json
         user_schema = UserSchema()
         
-        # checking errors with schema
+        # Checking errors with schema
         errors = user_schema.validate(json_body)
         if errors:
             return response_handler.bad_request(errors)
         else:
             for i in select_all(Users):
-                if json_body['username'] == i.username or json_body['email'] == i.email:
-                    return response_handler.bad_request("Username or email is exist")
+                if json_body['username'] == i.username:
+                    return response_handler.bad_request_array("username","Username is exist")
+                elif json_body['email'] == i.email:
+                    return response_handler.bad_request_array("email","Email is exist")
           
         id_address = uuid4()
         address = Addresses(id_address = id_address)
@@ -53,7 +55,7 @@ def register():
         return response_handler.created(data, "User registered successfully")
     
     except KeyError as err:
-        return response_handler.bad_request(f'{err.args[0]} field must be filled')
+        return response_handler.bad_request_array(f'"{err.args[0]}"',f"{err.args[0]} field must be filled")
     
     except Exception as err:
         return response_handler.bad_gateway(str(err))
@@ -62,14 +64,14 @@ def register():
 def user(id):
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth() or current_user['id_user'] == str(id):
+        if current_user['status'] == True or current_user['id_user'] == str(id):
+            
             # Check id is UUID or not
             UUID(id)
-            # Check user is exist or not
-            from app.models.users import select_user_id
-            users = select_user_id(id)
+            # Check user is exist or not 
+            users = select_by_id(Users,id)
             if users == None:
-                return response_handler.not_found('User not Found')
+                return response_handler.not_found_array("id_user",'User not Found')
             
             data = {"user" : UserSchema().dump(users),
                     "address" : AddressSchema().dump(users.address),
@@ -80,7 +82,7 @@ def user(id):
             return response_handler.unautorized()
         
     except ValueError:
-        return response_handler.bad_request("Invalid Id")
+        return response_handler.bad_request_array("id_user","Invalid Id")
         
     except Exception as err:
         return response_handler.bad_gateway(str(err))
@@ -88,7 +90,6 @@ def user(id):
 @jwt_required()  
 def update_user(id):
     try:
-        
         current_user = get_jwt_identity()
         if current_user['id_user'] == id:
             # Check  id is UUID or not
@@ -114,17 +115,17 @@ def update_user(id):
                 return response_handler.bad_request(address_errors)
             
             # Select user by id
-            user = select_by_id(id)
+            user = select_by_id(Users,id)
             # Select address by id
-            address = select_user_address(str(user.id_address))
-             
+            address = select_by_id(Addresses,user.id_address) 
+              
             # Check username is exist or not
             if form_body['username'] == user.username:
                 user.username = form_body['username']
             else:
-                existing_user = Users.query.filter_by(username=form_body['username']).first()
+                existing_user = filter_by(Users,'username',form_body['username'])
                 if existing_user:
-                    return response_handler.conflict('Username already exists')
+                    return response_handler.conflict_array("username",'Username already exists')
                 
             # Update user
             user.name = form_body['name']
@@ -159,10 +160,10 @@ def update_user(id):
             return response_handler.unautorized()
 
     except ValueError:
-        return response_handler.bad_request("Invalid Id")
+        return response_handler.bad_request_array("id_user","Invalid Id")
     
     except KeyError as err: 
-        return response_handler.bad_request(f'{err.args[0]} field must be filled')
+        return response_handler.bad_request_array(f'{err.args[0]}', f"{err.args[0]} field must be filled")
     
     except Exception as err:
         return response_handler.bad_gateway(str(err))
@@ -170,11 +171,9 @@ def update_user(id):
 @jwt_required()
 def list_user():
     try:
-        super_admin = super_admin_role()
-        admin = admin_role()
         current_user = get_jwt_identity()
-        if current_user['id_role'] == str(super_admin) or current_user['id_role'] == str(admin):
-             # Get param from url
+        if current_user['id_role'] in user_auth():
+            # Get param from url
             page = request.args.get('page', 1, type=int)
             per_page = request.args.get('per_page', int(os.getenv('PER_PAGE')), type=int)
             
@@ -194,17 +193,21 @@ def list_user():
                 
             return response_handler.ok_with_meta(data,meta)
         else:
-            return response_handler.unautorized("You are not Allowed here")
+            return response_handler.unautorized()
     except Exception as err:
         return response_handler.bad_gateway(str(err))
-  
+
 def reset_password():
     try:
         json_body = request.json
         email = json_body['email']
-        user = select_user_email(email) 
+        errors = UserSchema(only=['email']).validate(json_body)
+        if errors:
+            return response_handler.bad_request(errors)
+        
+        user = select_user_email(email)
         if user == None:
-            return response_handler.bad_request("User not found")
+            return response_handler.bad_request_array("email","Email not registered to an account")
         
         # Generate Token
         token = generate_token(email)
@@ -229,8 +232,7 @@ def change_password(token):
         email = serializer.loads(reset_token, max_age=os.getenv('MAX_AGE_MAIL'))  # Token expires after 1 hour (3600 seconds)
         user = select_user_email(email)
         if user:
-            password_schema = PasswordSchema()
-            errors = password_schema.validate(json_body)
+            errors = UserSchema(only=['password']).validate(json_body)
             if errors:
                 return response_handler.bad_request(errors)
             user.password = hash_password(json_body['password'])
@@ -249,29 +251,37 @@ def change_password(token):
 def activation_email():
     try:
         current_user = get_jwt_identity()
-        user = select_by_id(current_user['id_user'])
-        token = generate_token(user.email)
-        activation_token = token.replace('.','|')
-        # Add html url
-        #activation_url = os.getenv('ACTIVATION_ACC_FE')+'/'+activation_token
-        activation_url = "www.yahoo.com"
-        activate_body = activation_body(activation_url,user.username)
-        #Send mail
-        send_email(user.email,"Activation Account",activate_body)
+        if current_user['status'] == False:
+            user = select_by_id(Users,current_user['id_user'])
+            token = generate_token(user.email)
+            activation_token = token.replace('.','|')
+            # Add html url
+            activation_url = os.getenv('ACTIVATION_ACC_FE')+'/'+activation_token
+            activate_body = activation_body(activation_url,user.username)
+            #Send mail
+            send_email(user.email,"Activation Account",activate_body)
         
-        return response_handler.ok("","Please check your email to activate your account")
+            return response_handler.ok("","Please check your email to activate your account")
+        elif current_user['status'] == True:
+            return response_handler.conflict_array('status','Your account already activated')
     except Exception as err:
         return response_handler.bad_gateway(str(err))
- 
+
+@jwt_required()
 def activation_account(token):
-    try: 
-        serializer = URLSafeTimedSerializer(secret_key)
-        activation_token = token.replace('|','.')
-        email = serializer.loads(activation_token, max_age=os.getenv('MAX_AGE_MAIL'))  # Token expires after 1 hour (3600 seconds)
-        user = select_user_email(email)
-        user.status = True
-        db.session.commit()
-        return response_handler.ok("","Your Account success to activate")
+    try:
+        current_user = get_jwt_identity()
+        if current_user['status'] == False:
+            serializer = URLSafeTimedSerializer(secret_key)
+            activation_token = token.replace('|','.')
+        
+            email = serializer.loads(activation_token, max_age=os.getenv('MAX_AGE_MAIL'))  # Token expires after 1 hour (3600 seconds)
+            user = select_user_email(email)
+            user.status = True
+            db.session.commit()
+            return response_handler.ok("","Your Account success to activate")
+        elif current_user['status'] == True:
+            return response_handler.conflict_array('status','Your account already activated')
     except Exception as err:
         return response_handler.bad_gateway(str(err))
         

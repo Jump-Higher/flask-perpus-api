@@ -44,11 +44,27 @@ def bad_request(data):
     }
     return make_response(jsonify(response)),HTTPStatus.BAD_REQUEST.value
 
+def bad_request_array(data, message):
+    response = {
+        "code": "400",
+        "status": "BAD_REQUEST",
+        "message": {data:[message]}
+    }
+    return make_response(jsonify(response)),HTTPStatus.BAD_REQUEST.value
+
 def conflict(data):
     response = {
         "code": "409",
         "status": "CONFLICT",
         "message": data
+    }
+    return make_response(jsonify(response)),HTTPStatus.CONFLICT.value
+
+def conflict_array(data,message):
+    response = {
+        "code": "409",
+        "status": "CONFLICT",
+        "message": {data:[message]}
     }
     return make_response(jsonify(response)),HTTPStatus.CONFLICT.value
  
@@ -71,11 +87,11 @@ def unautorized():
     }
     return make_response(jsonify(response)),HTTPStatus.UNAUTHORIZED.value
 
-def unautorized_with_message(data):
+def unautorized_array(data,message):
     response = {
         "code": "401",
         "status": "UNAUTHORIZED",
-        "message": data
+        "message": {data:[message]}
     }
     return make_response(jsonify(response)),HTTPStatus.UNAUTHORIZED.value
 
@@ -84,5 +100,13 @@ def not_found(data):
         "code": "404",
         "status": "NOT_FOUND",
         "message": data
+    }
+    return make_response(jsonify(response)),HTTPStatus.NOT_FOUND.value
+
+def not_found_array(data, message):
+    response = {
+        "code": "404",
+        "status": "NOT_FOUND",
+        "message": {data:[message]}
     }
     return make_response(jsonify(response)),HTTPStatus.NOT_FOUND.value

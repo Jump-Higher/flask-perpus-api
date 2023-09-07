@@ -5,23 +5,21 @@ from app import db, response_handler
 from app.models.users import Users
 from app.hash import hash_password
 from app.generate_token import generate_token
-
+from app.schema.user_schema import LoginSchema
 def login():
     try:        
-        json_body = request.json        
-        if json_body['username'] =="":
-            return response_handler.bad_request("Username must be filled")
-        
-        elif json_body['password'] =="":
-            return response_handler.bad_request("Password must be filled")
+        json_body = request.json   
+        errors = LoginSchema().validate(json_body)
+        if errors:
+            return response_handler.bad_request(errors)
         
         user = Users.query.filter_by(username = json_body['username']).first()
     
         if not user:
-            return response_handler.not_found("Username not found")
+            return response_handler.not_found_array("username","Username not found")
         
         if hash_password(json_body['password']) != user.password:
-            return response_handler.unautorized_with_message("Invalid password, please check your password again")
+            return response_handler.unautorized_array("password","Invalid password, please check your password again")
         
         user.last_login = datetime.now()
         db.session.commit()
@@ -30,11 +28,13 @@ def login():
                                 "role":user.role.name,
                                 "status": user.status}
                               )
-        user = {"id_user": user.id_user,
-                "id_role": user.id_role,
-                "role": user.role.name,
-                "status": user.status}
-        data['data'] = user
+        data.update({
+            "id_user":user.id_user,
+            "id_role":user.id_role, 
+            "role":user.role.name,
+            "status": user.status
+        })
+        
         # decode token
         # print(decode_token(token['token']['access_token']))
         # decode = (decode_token(token['token']['access_token']))
