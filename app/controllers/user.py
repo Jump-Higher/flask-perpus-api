@@ -1,21 +1,21 @@
 from flask import request
-from app.schema.user_schema import UserSchema, PasswordSchema, EmailSchema
-from app.schema.roles_schema import RolesSchema
-from app.schema.address_schema import AddressSchema
-from app import response_handler,db,secret_key
-from app.models.users import  Users, user_all, select_user_email
-from app.models.roles import select_role_id, super_admin_role, admin_role
-from app.hash import hash_password
-from flask_jwt_extended import jwt_required,get_jwt_identity
-import os, cloudinary
-from uuid import uuid4
-from app.models import select_all,meta_data,select_by_id, filter_by
-from app.models.addresses import Addresses, select_user_address
-from datetime import datetime
-from app.controllers.roles import user_auth
-from app.controllers import generate_token, send_email, reset_password_body, activation_body
-from uuid import UUID
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
+from app import db, secret_key, response_handler
+from app.controllers import generate_token, send_email, reset_password_body, activation_body
+from app.controllers.roles import user_auth
+from app.hash import hash_password
+from app.models import select_all, meta_data, select_by_id, filter_by
+from app.models.addresses import Addresses
+from app.models.roles import select_role_id
+from app.models.users import Users, user_all, select_user_email
+from app.schema.address_schema import AddressSchema
+from app.schema.roles_schema import RolesSchema
+from app.schema.user_schema import UserSchema
+from datetime import datetime
+from uuid import uuid4, UUID
+import os
+import cloudinary
 
 
 def register():
