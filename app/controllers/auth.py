@@ -5,11 +5,12 @@ from app import db, response_handler
 from app.models.users import Users
 from app.hash import hash_password
 from app.generate_token import generate_token
-from app.schema.user_schema import LoginSchema
+from app.schema.user_schema import UserSchema
+
 def login():
     try:        
         json_body = request.json   
-        errors = LoginSchema().validate(json_body)
+        errors = UserSchema(only=['username','password']).validate(json_body)
         if errors:
             return response_handler.bad_request(errors)
         
@@ -42,6 +43,7 @@ def login():
         return response_handler.ok(data, message='Login successful, have a nice day')
     
     except KeyError as err:
-        return response_handler.bad_request(f'{err.args[0]} field must be filled')
+        return response_handler.bad_request_array(f'{err.args[0]}', f'{err.args[0]} field must be filled')
+    
     except Exception as err:
-        return response_handler.bad_gateway(err)
+        return response_handler.bad_gateway(str(err))

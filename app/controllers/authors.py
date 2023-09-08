@@ -5,7 +5,7 @@ from app.schema.authors_schema import AuthorsSchema
 from flask import request
 from app import response_handler,db
 from uuid import UUID
-from app.controllers.roles import user_auth
+from app.controllers import user_auth,public_auth,admin_auth
 import os
   
 @jwt_required()
@@ -13,7 +13,7 @@ def create_author():
     try:
         # Check Auth
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth(): 
+        if current_user['id_role'] in admin_auth(): 
             json_body = request.json
             
             # Checking errors with schema
@@ -24,7 +24,7 @@ def create_author():
             else:
                 for i in select_all(Authors):
                     if json_body['name'] == i.name:
-                        return response_handler.bad_request("Author is Exist")
+                        return response_handler.bad_request_array('name',"Author is Exist")
             
             # Create Author object
             new_author = Authors(name = json_body['name'],
@@ -44,7 +44,7 @@ def create_author():
             return response_handler.unautorized()
     
     except KeyError as err:
-        return response_handler.bad_request(f'{err.args[0]} field must be filled')
+        return response_handler.bad_request_array(f'{err.args[0]}', f'{err.args[0]} field must be filled')
 
     except Exception as err:
         return response_handler.bad_gateway(str(err))
@@ -53,7 +53,7 @@ def create_author():
 def author(id):
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth():
+        if current_user['id_role'] in public_auth():
             # Check id is UUID or not
             UUID(id)
             # Check Author is exist or not
@@ -69,9 +69,9 @@ def author(id):
         else:
             return response_handler.unautorized()
         
-    except ValueError:
-        return response_handler.bad_request("Invalid Id")
-        
+    except KeyError as err:
+        return response_handler.bad_request_array(f'{err.args[0]}', f'{err.args[0]} field must be filled')
+
     except Exception as err:
         return response_handler.bad_gateway(str(err))
 
@@ -79,7 +79,7 @@ def author(id):
 def update_author(id):
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth():
+        if current_user['id_role'] in admin_auth():
             # Check  id is UUID or not
             UUID(id)
             json_body = request.json
@@ -93,7 +93,7 @@ def update_author(id):
             # Check Author if not exist
             authors = select_by_id(Authors,id)
             if authors == None:
-                return response_handler.not_found('Author not Found')
+                return response_handler.not_found_array('name','Author not Found')
             
             # Check data of author same with previous or not 
             if all(json_body[field] == getattr(authors, field) for field in ['name','email','gender','phone_number']):
@@ -119,11 +119,11 @@ def update_author(id):
             return response_handler.unautorized()
 
     except ValueError:
-        return response_handler.bad_request("Invalid Id")
+        return response_handler.bad_request_array('id_author',"Invalid Id")
     
     except KeyError as err:
-        return response_handler.bad_request(f'{err.args[0]} field must be filled')
-    
+        return response_handler.bad_request_array(f'{err.args[0]}', f'{err.args[0]} field must be filled')
+
     except Exception as err:
         return response_handler.bad_gateway(str(err))
 
@@ -131,7 +131,7 @@ def update_author(id):
 def authors():
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth():
+        if current_user['id_role'] in admin_auth():
             # Get param from url
             page = request.args.get('page', 1, type=int)
             per_page = request.args.get('per_page', int(os.getenv('PER_PAGE')), type=int)
@@ -152,5 +152,5 @@ def authors():
             return response_handler.unautorized()
         
     except Exception as err:
-        return response_handler.bad_request(err)
+        return response_handler.bad_request(str(err))
             

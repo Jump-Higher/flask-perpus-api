@@ -1,7 +1,35 @@
 from itsdangerous import URLSafeTimedSerializer
-from app import secret_key, os, mail
+from app import secret_key, os, mail, response_handler
 from flask_mail import Message
- 
+from app.models import select_users_role
+
+
+# Check update 
+def check_update(json_body, data, array):
+    check_update = all(json_body[field] == getattr(data, field) for field in array)
+    return check_update
+
+# CRUL 
+def super_auth():
+    authorized_roles = str({select_users_role('SUPER_ADMIN_ROLE')})
+    return authorized_roles
+
+def public_auth():
+    authorized_roles = str({select_users_role('SUPER_ADMIN_ROLE'), 
+                            select_users_role('USER_ROLE'),
+                            select_users_role('ADMIN_ROLE')})
+    return authorized_roles
+
+
+def admin_auth():
+    authorized_roles = str({select_users_role('SUPER_ADMIN_ROLE'), 
+                            select_users_role('ADMIN_ROLE')})
+    return authorized_roles
+
+def user_auth():
+    authorized_roles = str({select_users_role('USER_ROLE')})
+    return authorized_roles
+
 def generate_token(email):
     serializer = URLSafeTimedSerializer(secret_key)
     return serializer.dumps(email)

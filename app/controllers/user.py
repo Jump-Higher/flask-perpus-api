@@ -2,8 +2,7 @@ from flask import request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 from app import db, secret_key, response_handler
-from app.controllers import generate_token, send_email, reset_password_body, activation_body
-from app.controllers.roles import user_auth
+from app.controllers import generate_token, send_email, reset_password_body, activation_body, admin_auth
 from app.hash import hash_password
 from app.models import select_all, meta_data, select_by_id, filter_by
 from app.models.addresses import Addresses
@@ -172,7 +171,7 @@ def update_user(id):
 def list_user():
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth():
+        if current_user['id_role'] in admin_auth():
             # Get param from url
             page = request.args.get('page', 1, type=int)
             per_page = request.args.get('per_page', int(os.getenv('PER_PAGE')), type=int)

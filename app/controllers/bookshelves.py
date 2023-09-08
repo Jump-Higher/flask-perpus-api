@@ -3,7 +3,7 @@ from flask import request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from uuid import UUID
 from app import db, response_handler
-from app.controllers.roles import user_auth
+from app.controllers import user_auth, admin_auth, public_auth
 from app.models import select_by_id, select_all, filter_by, order_by, meta_data
 from app.models.bookshelves import Bookshelves 
 from app.schema.bookshelves_schema import BookshelvesSchema
@@ -13,7 +13,7 @@ def create_bookshelf():
     try: 
         # Check Auth
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth(): 
+        if current_user['id_role'] in admin_auth(): 
             json_body = request.json
             
             # Checking errors with schema
@@ -24,7 +24,7 @@ def create_bookshelf():
             else:
                 for i in select_all(Bookshelves):
                     if json_body['bookshelf'] == i.bookshelf:
-                        return response_handler.conflict('Bookshelf is Exist')
+                        return response_handler.conflict_array('bookshelf','Bookshelf is Exist')
                     
             new_bookshelf = Bookshelves(bookshelf = json_body['bookshelf'])
                     
@@ -37,7 +37,7 @@ def create_bookshelf():
             return response_handler.unautorized()
     
     except KeyError as err:
-        return response_handler.bad_request(f'{err.args[0]} field must be filled')
+        return response_handler.bad_request_array(f'{err.args[0]}', f'{err.args[0]} field must be filled')
 
     except Exception as err:
         return response_handler.bad_gateway(str(err))
@@ -46,13 +46,13 @@ def create_bookshelf():
 def bookshelf(id):
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth():
+        if current_user['id_role'] in public_auth():
             # Check id is UUID or not
             UUID(id)
             # Check Bookshelf is exist or not
             bookshelves = select_by_id(Bookshelves,id)
             if bookshelves == None:
-                return response_handler.not_found('Bookshelves not Found')
+                return response_handler.not_found_array('bookshelf','Bookshelves not Found')
             
             # Add data to response 
             schema = BookshelvesSchema()
@@ -63,7 +63,7 @@ def bookshelf(id):
             return response_handler.unautorized()
         
     except ValueError:
-        return response_handler.bad_request("Invalid Id")
+        return response_handler.bad_request_array('id_bookshelf','Invalid Id')
         
     except Exception as err:
         return response_handler.bad_gateway(str(err))
@@ -72,7 +72,7 @@ def bookshelf(id):
 def update_bookshelf(id):
     try: 
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth():
+        if current_user['id_role'] in admin_auth():
             # Check  id is UUID or not
             UUID(id)
             json_body = request.json
@@ -86,16 +86,16 @@ def update_bookshelf(id):
             # Check bookshelf if not exist
             bookshelves = select_by_id(Bookshelves,id)
             if bookshelves == None:
-                return response_handler.not_found('Bookshelves not Found')
+                return response_handler.not_found_array('bookshelf','Bookshelves not Found')
             
             # Check name of bookshelf same with previous or not
             if json_body['bookshelf'] == bookshelves.bookshelf: 
-                return response_handler.bad_request("Your Bookshelf Already Updated")
+                return response_handler.bad_request_array('bookshelf','Your Bookshelf Already Updated')
             else:
                 current_bookshelf = filter_by(Bookshelves, 'bookshelf', json_body['bookshelf'])
                 # Check bookshelf same with the others or not
                 if current_bookshelf != None: 
-                    return response_handler.conflict('Bookshelf is exist') 
+                    return response_handler.conflict_array('bookshelf','Bookshelf is exist') 
                 
                 # Add bookshelf to db
                 bookshelves.bookshelf = json_body['bookshelf']  
@@ -106,10 +106,10 @@ def update_bookshelf(id):
             return response_handler.unautorized()
 
     except ValueError:
-        return response_handler.bad_request("Invalid Id")
-    
+        return response_handler.bad_request_array('id_bookshelf','Invalid Id')
+
     except KeyError as err:
-        return response_handler.bad_request(f'{err.args[0]} field must be filled')
+        return response_handler.bad_request_array(f'{err.args[0]}', f'{err.args[0]} field must be filled')
     
     except Exception as err:
         return response_handler.bad_gateway(str(err))
@@ -143,4 +143,4 @@ def bookshelves():
             return response_handler.unautorized()
         
     except Exception as err:
-        return response_handler.bad_request(err)
+        return response_handler.bad_request(str(err))

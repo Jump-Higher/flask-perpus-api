@@ -4,7 +4,7 @@ from flask import request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from uuid import UUID, uuid4
 from app import db, response_handler
-from app.controllers.roles import user_auth
+from app.controllers import user_auth, admin_auth, public_auth
 from app.models import select_by_id, select_all, filter_by, order_by, meta_data
 from app.models.books import Books, books_all,select_book_id
 from app.schema.books_schema import BooksSchema
@@ -18,7 +18,7 @@ def create_book():
     try: 
         # Check Auth
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth(): 
+        if current_user['id_role'] in admin_auth(): 
             form_body = request.form
               
             # Checking errors with schema
@@ -29,7 +29,7 @@ def create_book():
             else:
                 for i in select_all(Books):
                     if form_body['title'] == i.title and form_body['id_author'] == str(i.id_author):
-                        return response_handler.conflict('Book is Exist')
+                        return response_handler.conflict_array('title','Book is Exist')
             
             id_book = uuid4()
             new_book = Books(id_book = id_book,
@@ -66,7 +66,7 @@ def create_book():
             return response_handler.unautorized()
     
     except KeyError as err:
-        return response_handler.bad_request(f'{err.args[0]} field must be filled')
+        return response_handler.bad_request_array(f'{err.args[0]}', f'{err.args[0]} field must be filled')
 
     except Exception as err:
         return response_handler.bad_gateway(str(err))
@@ -75,13 +75,13 @@ def create_book():
 def book(id):
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth():
+        if current_user['id_role'] in public_auth():
             # Check id is UUID or not
             UUID(id)
             # Check Book is exist or not
             books = select_book_id(id)
             if books == None:
-                return response_handler.not_found('Book not Found')
+                return response_handler.not_found_array('book','Book not Found')
             
             data = {"book" : BooksSchema().dump(books),
                     "author" : AuthorsSchema().dump(books.author),
@@ -94,16 +94,17 @@ def book(id):
             return response_handler.unautorized()
         
     except ValueError:
-        return response_handler.bad_request("Invalid Id")
+        return response_handler.bad_request_array('id_book','Invalid Id')
         
     except Exception as err:
         return response_handler.bad_gateway(str(err))
+  
   
 @jwt_required()
 def update_book(id):
     try: 
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth():
+        if current_user['id_role'] in admin_auth():
             # Check  id is UUID or not
             UUID(id)
             form_body = request.form
@@ -117,17 +118,17 @@ def update_book(id):
             # Check book if not exist
             books = select_by_id(Books,id)
             if books == None:
-                return response_handler.not_found('Book not Found')
+                return response_handler.not_found_array('book','Book not Found')
              
             # Check data same with previous or not
              
             if all(form_body[field] == str(getattr(books, field)) for field in ['title', 'description', 'stock', 'id_author', 'id_publisher', 'id_category', 'id_bookshelf']) and 'picture' not in request.files :
-                return response_handler.bad_request("Book Already Updated")
+                return response_handler.bad_request_array('book',"Book Already Updated")
             else:
                 current_book = filter_by(Books, 'title', form_body['title'])
                 # Check bookshelf same with the others or not
                 if current_book != None and books.title != form_body['title']: 
-                    return response_handler.conflict('Book is exist') 
+                    return response_handler.conflict_array('book','Book is exist') 
                 
                 # Add bookshelf to db
                 books.title = form_body['title']  
@@ -160,77 +161,40 @@ def update_book(id):
             return response_handler.unautorized()
 
     except ValueError:
-        return response_handler.bad_request("Invalid Id")
-    
+        return response_handler.bad_request_array('id_book','Invalid Id')
+
     except KeyError as err:
-        return response_handler.bad_request(f'{err.args[0]} field must be filled')
+        return response_handler.bad_request_array(f'{err.args[0]}', f'{err.args[0]} field must be filled')
     
     except Exception as err:
         return response_handler.bad_gateway(str(err))
  
-# @jwt_required()
-# def books():
-    try:
-        current_user = get_jwt_identity() 
-        
-        if current_user['id_role'] in user_auth():
-            
-            # Get param from url
-            page = request.args.get('page', 1, type=int)
-            per_page = request.args.get('per_page', int(os.getenv('PER_PAGE')), type=int)
-            # Check is page exceed or not
-            page_exceeded = meta_data(Books,page,per_page)
-            if page_exceeded: 
-                return response_handler.not_found("Page Not Found") 
-            
-            # Query data bookshelves all
-            books = order_by(Books, 'page', page, 'per_page', per_page)
-            
-            # Iterate to data
-            data = []
-            for i in books:
-                data.append({
-                    "id_book" : i.id_book,
-                    "title" : i.title,
-                    "description": i.description,
-                    "stock" : i.stock,
-                    "id_author" : i.id_author,
-                    "id_publisher" : i.id_publisher,
-                    "id_category" : i.id_category,
-                    "id_bookshelf" : i.id_bookshelf,
-                    "picture" : i.picture,
-                    "created_at": i.created_at,
-                    "updated_at": i.updated_at
-                })
-                
-            return response_handler.ok_with_meta(data, books)
-        else:
-            return response_handler.unautorized()
-        
-    except Exception as err:
-        return response_handler.bad_request(err)
 
-def books(): 
+def books():
+    try:
     # Get param from url
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', int(os.getenv('PER_PAGE')), type=int)
-    
-    # Check is page exceed or not
-    page_exceeded = meta_data(Books,page,per_page)
-    if page_exceeded: 
-        return response_handler.not_found("Page Not Found")
-    
-    # Query data bookshelves all
-    meta = books_all('page', page, 'per_page', per_page)
-     
-    data = []
-    for i in meta.items:
-        data.append({
-            "book" : BooksSchema().dump(i),
-            "author" : AuthorsSchema().dump(i.author),
-            "publisher" : PublishersSchema().dump(i.publisher),
-            "category" : CategoriesSchema().dump(i.category),
-            "bookshelf" : BookshelvesSchema().dump(i.bookshelf)
-        })
-          
-    return response_handler.ok_with_meta(data,meta)
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', int(os.getenv('PER_PAGE')), type=int)
+        
+        # Check is page exceed or not
+        page_exceeded = meta_data(Books,page,per_page)
+        if page_exceeded: 
+            return response_handler.not_found("Page Not Found")
+        
+        # Query data bookshelves all
+        meta = books_all('page', page, 'per_page', per_page)
+        
+        data = []
+        for i in meta.items:
+            data.append({
+                "book" : BooksSchema().dump(i),
+                "author" : AuthorsSchema().dump(i.author),
+                "publisher" : PublishersSchema().dump(i.publisher),
+                "category" : CategoriesSchema().dump(i.category),
+                "bookshelf" : BookshelvesSchema().dump(i.bookshelf)
+            })
+            
+        return response_handler.ok_with_meta(data,meta)
+    except Exception as err:
+        return response_handler.bad_request(str(err))
+        

@@ -5,7 +5,7 @@ from app.schema.categories_schema import CategoriesSchema
 from app import response_handler
 from app.models.categories import Categories
 from app import db
-from app.controllers.roles import user_auth
+from app.controllers import admin_auth, public_auth
 from uuid import UUID
 import os
 
@@ -14,7 +14,7 @@ def create_category():
     try: 
         # Check Auth
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth(): 
+        if current_user['id_role'] in admin_auth(): 
             json_body = request.json
             
             # Checking errors with schema
@@ -25,7 +25,7 @@ def create_category():
             else:
                 for i in select_all(Categories):
                     if json_body['category'] == i.category:
-                        return response_handler.conflict('Category is Exist')
+                        return response_handler.conflict_array('category','Category is Exist')
                     
             new_category = Categories(category = json_body['category'])
                     
@@ -38,7 +38,7 @@ def create_category():
             return response_handler.unautorized()
     
     except KeyError as err:
-        return response_handler.bad_request(f'{err.args[0]} field must be filled')
+        return response_handler.bad_request_array(f'{err.args[0]}', f'{err.args[0]} field must be filled')
 
     except Exception as err:
         return response_handler.bad_gateway(str(err))
@@ -47,13 +47,13 @@ def create_category():
 def category(id):
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth():
+        if current_user['id_role'] in public_auth():
             # Check id is UUID or not
             UUID(id)
             # Check Category is exist or not
             categories = select_by_id(Categories,id)
             if categories == None:
-                return response_handler.not_found('Category not Found')
+                return response_handler.not_found_array('category','Category not Found')
             
             # Add data to response 
             schema = CategoriesSchema()
@@ -64,7 +64,7 @@ def category(id):
             return response_handler.unautorized()
         
     except ValueError:
-        return response_handler.bad_request("Invalid Id")
+        return response_handler.bad_request_array('id_category','Invalid Id')
         
     except Exception as err:
         return response_handler.bad_gateway(str(err))
@@ -73,7 +73,7 @@ def category(id):
 def update_category(id):
     try: 
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth():
+        if current_user['id_role'] in admin_auth():
             # Check  id is UUID or not
             UUID(id)
             json_body = request.json
@@ -87,16 +87,16 @@ def update_category(id):
             # Check category if not exist
             categories = select_by_id(Categories,id)
             if categories == None:
-                return response_handler.not_found('Category not Found')
+                return response_handler.not_found_array('category','Category not Found')
             
             # Check name of category same with previous or not
             if json_body['category'] == categories.category: 
-                return response_handler.bad_request("Your Category Already Updated")
+                return response_handler.bad_request_array('category','Your Category Already Updated')
             else:
                 current_category = filter_by(Categories, 'category', json_body['category'])
                 # Check category same with the others or not
                 if current_category != None: 
-                    return response_handler.conflict('Category is exist') 
+                    return response_handler.conflict_array('category','Category is exist') 
                 
                 # Add category to db
                 categories.category = json_body['category']  
@@ -107,10 +107,10 @@ def update_category(id):
             return response_handler.unautorized()
 
     except ValueError:
-        return response_handler.bad_request("Invalid Id")
-    
+        return response_handler.bad_request_array('id_category','Invalid Id')
+
     except KeyError as err:
-        return response_handler.bad_request(f'{err.args[0]} field must be filled')
+        return response_handler.bad_request_array(f'{err.args[0]}', f'{err.args[0]} field must be filled')
     
     except Exception as err:
         return response_handler.bad_gateway(str(err))
@@ -120,7 +120,7 @@ def categories():
     try:
         current_user = get_jwt_identity() 
         
-        if current_user['id_role'] in user_auth():
+        if current_user['id_role'] in admin_auth():
             # Get param from url
             page = request.args.get('page', 1, type=int)
             per_page = request.args.get('per_page', int(os.getenv('PER_PAGE')), type=int)
@@ -142,5 +142,5 @@ def categories():
             return response_handler.unautorized()
         
     except Exception as err:
-        return response_handler.bad_request(err)
+        return response_handler.bad_request(str(err))
  

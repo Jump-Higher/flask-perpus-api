@@ -3,7 +3,6 @@ from flask import request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from uuid import UUID,uuid4
 from app import db, response_handler
-from app.controllers.roles import user_auth_user
 from app.models import select_by_id, select_all, filter_by, order_by, meta_data
 from app.models.cart import Carts, select_cart, select_carts, cart_all
 from app.schema.carts_schema import CartsSchema
@@ -12,13 +11,14 @@ from app.models.borrows import Borrows
 from app.models.borrow_details import BorrowDetails
 from app.models.returns import limit_borrow, Returns
 from app.models.books import select_book_id
+from app.controllers import user_auth
 
 @jwt_required()
 def create_cart(id):
     try: 
         # Check Auth
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth_user():
+        if current_user['id_role'] in user_auth():
             # Check id is UUID or not
             UUID(id)
             # Check Book is exist or not
@@ -62,7 +62,7 @@ def borrow(id):
         current_user = get_jwt_identity()
         if current_user['status'] is False:
             return response_handler.unautorized_with_message("Please activate your account to borrow book")
-        elif current_user['id_role'] in user_auth_user() and current_user['status'] is True:
+        elif current_user['id_role'] in user_auth() and current_user['status'] is True:
             # Check id is UUID or not
             UUID(id)
             
@@ -113,7 +113,7 @@ def borrow(id):
 def co_cart(id):
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth_user():
+        if current_user['id_role'] in user_auth():
             # Check id is UUID or not
             UUID(id)
             # Check user co same with user acc
@@ -167,7 +167,7 @@ def co_cart(id):
 def carts():
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth_user():
+        if current_user['id_role'] in user_auth():
             
             # Get param from url
             page = request.args.get('page', 1, type=int)
@@ -198,7 +198,7 @@ def carts():
 def delete_cart(id):
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth_user():
+        if current_user['id_role'] in user_auth():
             UUID(id)
             # Check user co same with user acc
             cart = select_cart(id)

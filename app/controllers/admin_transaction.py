@@ -1,5 +1,5 @@
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.controllers.roles import user_auth
+from app.controllers import user_auth
 from uuid import UUID
 from flask import request
 from app.models.borrows import Borrows
