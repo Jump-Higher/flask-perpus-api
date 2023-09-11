@@ -155,8 +155,15 @@ def update_book(id):
                     books.picture = books.picture
                     
                 db.session.commit()
+                
+                data = {"book" : BooksSchema().dump(books),
+                    "author" : AuthorsSchema().dump(books.author),
+                    "publisher" : PublishersSchema().dump(books.publisher),
+                    "category" : CategoriesSchema().dump(books.category),
+                    "bookshelf" : BookshelvesSchema().dump(books.bookshelf)}
+        
 
-                return response_handler.ok("", "Book successfuly updated")
+                return response_handler.ok(data, "Book successfuly updated")
         else:
             return response_handler.unautorized()
 

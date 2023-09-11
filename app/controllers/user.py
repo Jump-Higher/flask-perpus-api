@@ -154,7 +154,11 @@ def update_user(id):
 
             db.session.commit()
             
-            return response_handler.ok("", "Your data is updated")
+            user_schema = UserSchema()
+            data = user_schema.dump(user)
+            data.update({'address':address.address})
+            
+            return response_handler.ok(data, "Your data is updated")
         else:
             return response_handler.unautorized()
 

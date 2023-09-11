@@ -100,8 +100,10 @@ def update_bookshelf(id):
                 # Add bookshelf to db
                 bookshelves.bookshelf = json_body['bookshelf']  
                 db.session.commit()
+                data = schema.dump(bookshelves)
+                
 
-                return response_handler.ok("", "Bookshelf successfuly updated")
+                return response_handler.ok(data, "Bookshelf successfuly updated")
         else:
             return response_handler.unautorized()
 

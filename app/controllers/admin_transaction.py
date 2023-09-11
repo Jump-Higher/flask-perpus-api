@@ -1,5 +1,5 @@
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.controllers import user_auth
+from app.controllers import admin_auth
 from uuid import UUID
 from flask import request
 from app.models.borrows import Borrows
@@ -22,7 +22,7 @@ def booked_books():
     try:
         # Check Auth
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth():
+        if current_user['id_role'] in admin_auth():
             # Get param from url
             page = request.args.get('page', 1, type=int)
             per_page = request.args.get('per_page', int(os.getenv('PER_PAGE')), type=int)
@@ -54,7 +54,7 @@ def acc_book(id):
     try:
         # Check Auth
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth():
+        if current_user['id_role'] in admin_auth():
             UUID(id)
             borrows = select_by_id(Borrows,id)
            
@@ -85,7 +85,7 @@ def acc_book(id):
 def return_books():
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth(): 
+        if current_user['id_role'] in admin_auth(): 
         
             # Get param from url
             page = request.args.get('page', 1, type=int)
@@ -117,7 +117,7 @@ def return_books():
 def create_return():
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth():
+        if current_user['id_role'] in admin_auth():
             json_body = request.json
             
             # Check id valid or not 

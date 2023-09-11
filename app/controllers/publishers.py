@@ -108,6 +108,7 @@ def update_publisher(id):
                 db.session.commit()
                 
                 data = schema.dump(publishers)
+                
                  
                 return response_handler.ok(data, 'Publisher successfull updated')
         else:

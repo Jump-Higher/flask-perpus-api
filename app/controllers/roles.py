@@ -101,8 +101,10 @@ def update_role(id):
                 # Add role to db
                 roles.name = json_body['name']  
                 db.session.commit()
+                
+                data = schema.dump(roles)
 
-                return response_handler.ok('', 'Role successfuly updated')
+                return response_handler.ok(data, 'Role successfuly updated')
         else:
             return response_handler.unautorized()
 

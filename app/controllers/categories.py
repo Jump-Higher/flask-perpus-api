@@ -101,8 +101,11 @@ def update_category(id):
                 # Add category to db
                 categories.category = json_body['category']  
                 db.session.commit()
+                
+                data = schema.dump(categories)
+                
 
-                return response_handler.ok("", "Category successfuly updated")
+                return response_handler.ok(data, "Category successfuly updated")
         else:
             return response_handler.unautorized()
 
