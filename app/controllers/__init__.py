@@ -3,7 +3,9 @@ from app import secret_key, os, mail, response_handler
 from flask_mail import Message
 from app.models import select_users_role
 
-
+def gender():
+    gender = ['female','male','prefer not say']
+    return gender
 # Check update 
 def check_update(json_body, data, array):
     check_update = all(json_body[field] == getattr(data, field) for field in array)

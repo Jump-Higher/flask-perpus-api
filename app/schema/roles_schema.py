@@ -4,10 +4,9 @@ class RolesSchema(Schema):
     
     id_role = fields.UUID(dump_only=True)
     name = fields.Str(required=True,
-                      validate=[
-                          validate.Length(min=2, max=100),
-                          validate.Regexp(r'^[a-zA-Z\s]+$',
-                                         error='Invalid name format. Only letters and space are allowed.')
-                      ])
+                      validate=[validate.Length(min=1, error='Name must be filled'),
+                                validate.Length(min=2, max=100),
+                                validate.Regexp(r'^[a-zA-Z][a-zA-Z\s]*$',error='Name should only contain letters.')])
+    
     created_at = fields.DateTime(dump_only=True)
     updated_at = fields.DateTime(dump_only=True)

@@ -19,8 +19,8 @@ def create_author():
             # Checking errors with schema
             schema = AuthorsSchema() 
             errors = schema.validate(json_body)
-            if errors and json_body['phone_number'] != "":
-                return response_handler.bad_request(errors)
+            if errors:
+                return response_handler.bad_request(errors) 
             else:
                 for i in select_all(Authors):
                     if json_body['name'] == i.name:
