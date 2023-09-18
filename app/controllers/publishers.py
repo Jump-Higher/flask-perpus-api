@@ -19,7 +19,7 @@ def create_publisher():
             # Checking errors with schema
             schema = PublishersSchema() 
             errors = schema.validate(json_body)
-            if errors and json_body['phone_number'] != '':
+            if errors:
                 return response_handler.bad_request(errors)
             else:
                 for i in select_all(Publishers):
@@ -66,7 +66,10 @@ def publisher(id):
         
     except ValueError:
         return response_handler.bad_request_array('id_publisher','Invalid Id')
-        
+    
+    except KeyError as err:
+        return response_handler.bad_request_array(f'{err.args[0]}', f'{err.args[0]} field must be filled')
+
     except Exception as err:
         return response_handler.bad_gateway(str(err))
 
@@ -89,11 +92,11 @@ def update_publisher(id):
             publishers = select_by_id(Publishers,id)
             if publishers == None:
                 return response_handler.not_found_array('publisher','Publisher not Found')
-            
+        
             #Check data of publisher same with previous or not 
             array = ['name','email','phone_number']
-            check_update(json_body, publishers, array)
-            if check_update:
+            
+            if check_update(json_body, publishers, array) == True:
                 return response_handler.bad_request_array('publisher','Publisher Already Updated')
             else:
                 current_publisher = filter_by(Publishers, 'name', json_body['name'])
