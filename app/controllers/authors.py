@@ -90,7 +90,7 @@ def update_author(id):
             # Check error with schema
             schema = AuthorsSchema()
             errors = schema.validate(json_body) 
-            if errors and json_body['phone_number'] != "":
+            if errors:
                 return response_handler.bad_request(errors)
             
             # Check Author if not exist
@@ -100,8 +100,8 @@ def update_author(id):
             
             # Check data of author same with previous or not 
             array = ['name','email','gender','phone_number']
-            check_update(json_body, authors, array)
-            if check_update == True:
+         
+            if check_update(json_body, authors, array) == True:
                 return response_handler.bad_request_array('author','Author Already Updated')
             else:
                 current_author = filter_by(Authors, 'name', json_body['name'])

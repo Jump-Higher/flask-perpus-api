@@ -85,7 +85,7 @@ def update_publisher(id):
             # Check error with schema
             schema = PublishersSchema()
             errors = schema.validate(json_body) 
-            if errors and json_body['phone_number'] != '':
+            if errors:
                 return response_handler.bad_request(errors)
             
             # Check Publisher if not exist
@@ -95,13 +95,12 @@ def update_publisher(id):
         
             #Check data of publisher same with previous or not 
             array = ['name','email','phone_number']
-            
             if check_update(json_body, publishers, array) == True:
                 return response_handler.bad_request_array('publisher','Publisher Already Updated')
             else:
                 current_publisher = filter_by(Publishers, 'name', json_body['name'])
                 # Check author same with the others or not
-                if current_publisher != None and publisher.name != json_body['name']: 
+                if current_publisher != None and publishers.name != json_body['name']: 
                     return response_handler.conflict_array('name','Publisher is exist')
                 
                 # Add author to db
