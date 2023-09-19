@@ -104,22 +104,29 @@ def update_author(id):
             if check_update(json_body, authors, array) == True:
                 return response_handler.bad_request_array('author','Author Already Updated')
             else:
-                current_author = filter_by(Authors, 'name', json_body['name'])
-                # Check author same with the others or not
-                if current_author != None and authors.name != json_body['name']: 
-                    return response_handler.conflict_array('author','Author is exist')
-                
-                # Add author to db
-                authors.name = json_body['name']
-                authors.email = json_body['email']
-                authors.gender = json_body['gender']
-                authors.phone_number = json_body['phone_number']
-                db.session.commit()
-                
-                # Add author to schema
-                data = schema.dump(authors)
-                 
-                return response_handler.ok(data, "Author successfull updated")
+                conflict = {}
+                for i in select_all(Authors):
+                    if str(i.id_author) != id:
+                        if json_body['name'] == i.name:
+                            conflict.update({'name':['Author is Exist']})
+                        if json_body['email'] == i.email:
+                            conflict.update({'email':['Author Email is Exist']})
+                        if json_body['phone_number'] == i.phone_number and json_body['phone_number'] != '':
+                            conflict.update({'phone_number':['Author Phone Number is Exist']})
+                if conflict:
+                    return response_handler.conflict(conflict)
+                else: 
+                    # Add author to db
+                    authors.name = json_body['name']
+                    authors.email = json_body['email']
+                    authors.gender = json_body['gender']
+                    authors.phone_number = json_body['phone_number']
+                    db.session.commit()
+                    
+                    # Add author to schema
+                    data = schema.dump(authors)
+                    
+                    return response_handler.ok(data, "Author successfull updated")
         else:
             return response_handler.unautorized()
 

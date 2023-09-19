@@ -78,7 +78,7 @@ def update_publisher(id):
     try:
         current_user = get_jwt_identity()
         if current_user['id_role'] in admin_auth():
-            # Check  id is UUID or not
+            # Check id is UUID or not
             UUID(id)
             json_body = request.json
             
@@ -88,31 +88,38 @@ def update_publisher(id):
             if errors:
                 return response_handler.bad_request(errors)
             
-            # Check Publisher if not exist
+            # Check data if not exist
             publishers = select_by_id(Publishers,id)
             if publishers == None:
                 return response_handler.not_found_array('publisher','Publisher not Found')
         
-            #Check data of publisher same with previous or not 
+            # Check data of publisher same with previous or not 
             array = ['name','email','phone_number']
             if check_update(json_body, publishers, array) == True:
                 return response_handler.bad_request_array('publisher','Publisher Already Updated')
+            # Check data same with other or not
             else:
-                current_publisher = filter_by(Publishers, 'name', json_body['name'])
-                # Check author same with the others or not
-                if current_publisher != None and publishers.name != json_body['name']: 
-                    return response_handler.conflict_array('name','Publisher is exist')
-                
-                # Add author to db
-                publishers.name = json_body['name']
-                publishers.email = json_body['email']
-                publishers.phone_number = json_body['phone_number']
-                db.session.commit()
-                
-                data = schema.dump(publishers)
-                
-                 
-                return response_handler.ok(data, 'Publisher successfull updated')
+                conflict = {}
+                for i in select_all(Publishers):
+                    if str(i.id_publisher) != id:
+                        if json_body['name'] == i.name:
+                            conflict.update({'name':['Publisher is Exist']})
+                        if json_body['email'] == i.email:
+                            conflict.update({'email':['Publisher Email is Exist']})
+                        if json_body['phone_number'] == i.phone_number and json_body['phone_number'] != '':
+                            conflict.update({'phone_number':['Publisher Phone Number is Exist']})
+                if conflict:
+                    return response_handler.conflict(conflict)
+                else:
+                    # Add data to db
+                    publishers.name = json_body['name']
+                    publishers.email = json_body['email']
+                    publishers.phone_number = json_body['phone_number']
+                    db.session.commit()
+                    
+                    data = schema.dump(publishers)
+                     
+                    return response_handler.ok(data, 'Publisher successfull updated')
         else:
             return response_handler.unautorized()
 
