@@ -121,7 +121,7 @@ def bookshelves():
     try:
         current_user = get_jwt_identity() 
         
-        if current_user['id_role'] in user_auth():
+        if current_user['id_role'] in admin_auth():
             
             # Get param from url
             page = request.args.get('page', 1, type=int)

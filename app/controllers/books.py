@@ -31,9 +31,7 @@ def create_book():
                     if form_body['title'] == i.title and form_body['id_author'] == str(i.id_author):
                         return response_handler.conflict_array('title','Book is Exist')
             
-            id_book = uuid4()
-            new_book = Books(id_book = id_book,
-                             title = form_body['title'],
+            new_book = Books(title = form_body['title'],
                              description = form_body['description'],
                              stock = form_body['stock'],
                              id_author = form_body['id_author'],

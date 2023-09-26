@@ -24,8 +24,10 @@ def create_publisher():
             else:
                 for i in select_all(Publishers):
                     if json_body['name'] == i.name:
-                        return response_handler.bad_request_array('name','Publisher is Exist')
-            
+                       return response_handler.bad_request_array('name','Publisher is Exist')
+                    elif json_body['email'] == i.email:
+                       return response_handler.bad_request_array('email','Publisher email is Exist')
+                                    
             new_publisher = Publishers(name = json_body['name'],
                                        email = json_body['email'], 
                                        phone_number = json_body['phone_number'])
