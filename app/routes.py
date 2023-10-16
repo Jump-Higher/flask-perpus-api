@@ -52,6 +52,8 @@ app.route('/book/create', methods = ['POST'])(books.create_book)
 app.route('/book/<id>', methods = ['GET'])(books.book)
 app.route('/book/update/<id>', methods = ['PATCH'])(books.update_book)
 app.route('/books', methods = ['GET'])(books.books)
+app.route('/private_books', methods = ['GET'])(books.private_books)
+
 
 # Borrow
 app.route('/borrow/<id>', methods = ['POST'])(user_transaction.borrow)

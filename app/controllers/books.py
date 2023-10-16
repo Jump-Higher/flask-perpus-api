@@ -173,7 +173,39 @@ def update_book(id):
     
     except Exception as err:
         return response_handler.bad_gateway(str(err))
- 
+
+@jwt_required()
+def private_books():
+    try:
+    # Get param from url
+        current_user = get_jwt_identity()
+        if current_user['id_role'] in admin_auth():
+            page = request.args.get('page', 1, type=int)
+            per_page = request.args.get('per_page', int(os.getenv('PER_PAGE')), type=int)
+            
+            # Check is page exceed or not
+            page_exceeded = meta_data(Books,page,per_page)
+            if page_exceeded: 
+                return response_handler.not_found("Page Not Found")
+            
+            # Query data bookshelves all
+            meta = books_all('page', page, 'per_page', per_page)
+            
+            data = []
+            for i in meta.items:
+                data.append({
+                    "book" : BooksSchema().dump(i),
+                    "author" : AuthorsSchema().dump(i.author),
+                    "publisher" : PublishersSchema().dump(i.publisher),
+                    "category" : CategoriesSchema().dump(i.category),
+                    "bookshelf" : BookshelvesSchema().dump(i.bookshelf)
+                }) 
+                
+            return response_handler.ok_with_meta(data,meta)
+        else:
+            return response_handler.unautorized()
+    except Exception as err:
+        return response_handler.bad_request(str(err))
 
 def books():
     try:
@@ -197,7 +229,7 @@ def books():
                 "publisher" : PublishersSchema().dump(i.publisher),
                 "category" : CategoriesSchema().dump(i.category),
                 "bookshelf" : BookshelvesSchema().dump(i.bookshelf)
-            })
+            }) 
             
         return response_handler.ok_with_meta(data,meta)
     except Exception as err:
