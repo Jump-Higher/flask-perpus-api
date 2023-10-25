@@ -3,11 +3,6 @@ from app import secret_key, os, mail, response_handler,app
 from flask_mail import Message
 from app.models import select_users_role
 
-@app.after_request
-def add_header(response):
-    response.headers['ngrok-skip-browse-warning'] = ''
-    return response
-
 def gender():
     gender = ['female','male','prefer not say']
     return gender
