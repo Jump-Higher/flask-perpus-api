@@ -3,6 +3,7 @@ from app import secret_key, os, mail, response_handler,app
 from flask_mail import Message
 from app.models import select_users_role
 
+
 def gender():
     gender = ['female','male','prefer not say']
     return gender

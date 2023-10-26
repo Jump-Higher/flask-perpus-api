@@ -7,7 +7,7 @@ class Db_config(object):
     host = os.getenv('DB_HOST')
     database = os.getenv('DB_DATABASE')
 
-    SQLALCHEMY_DATABASE_URI = dialect+'://'+username+':'+password+'@'+host+'/'+database+'?sslmode=require'
+    SQLALCHEMY_DATABASE_URI = dialect+'://'+username+':'+password+'@'+host+'/'+database+'?sslmode=optional'
 
 class Cloudinary_config(object):
     cloudinary.config(cloud_name = os.getenv('CLOUD_NAME'), api_key=os.getenv('API_KEY'), 
