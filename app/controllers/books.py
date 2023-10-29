@@ -1,6 +1,6 @@
 import os, cloudinary
 from cloudinary import uploader
-from flask import request
+from flask import request,make_response
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from uuid import UUID, uuid4
 from app import db, response_handler
@@ -12,6 +12,7 @@ from app.schema.authors_schema import AuthorsSchema
 from app.schema.publishers_schema import PublishersSchema
 from app.schema.categories_schema import CategoriesSchema
 from app.schema.bookshelves_schema import BookshelvesSchema
+
  
 @jwt_required()
 def create_book():
@@ -201,7 +202,9 @@ def private_books():
                     "bookshelf" : BookshelvesSchema().dump(i.bookshelf)
                 }) 
                 
-            return response_handler.ok_with_meta(data,meta)
+            response = make_response(response_handler.ok_with_meta(data,meta))
+            response.headers['ngrok-skip-browser-warning'] = 'any_value'
+            return response
         else:
             return response_handler.unautorized()
     except Exception as err:
@@ -220,7 +223,6 @@ def books():
         
         # Query data bookshelves all
         meta = books_all('page', page, 'per_page', per_page)
-        from flask import make_response
         data = []
         for i in meta.items:
             data.append({
