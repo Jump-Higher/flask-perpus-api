@@ -220,7 +220,7 @@ def books():
         
         # Query data bookshelves all
         meta = books_all('page', page, 'per_page', per_page)
-        
+        from flask import make_response
         data = []
         for i in meta.items:
             data.append({
@@ -231,7 +231,9 @@ def books():
                 "bookshelf" : BookshelvesSchema().dump(i.bookshelf)
             }) 
             
-        return response_handler.ok_with_meta(data,meta)
+        response = make_response(response_handler.ok_with_meta(data,meta))
+        response.headers['ngrok-skip-browser-warning'] = 'any_value'
+        return response
     except Exception as err:
         return response_handler.bad_request(str(err))
         

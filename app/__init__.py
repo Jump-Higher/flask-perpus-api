@@ -26,6 +26,8 @@ jwt = JWTManager(app)
 # URL prefix
 app.wsgi_app = PrefixMiddleware(app.wsgi_app, prefix='/perpus-api/v1')
 
+
+
 # Secret key for password reset
 secret_key = app.config['SECRET_KEY'] = os.getenv('EMAIL_SECRET_KEY')
 
@@ -45,6 +47,7 @@ create_roles()
 # Create Super Admin User
 from app.models.users import create_super_admin
 create_super_admin()
+
 
 from app import routes
 if __name__ == "__main__":
