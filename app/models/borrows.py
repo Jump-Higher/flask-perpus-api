@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 class Borrows(db.Model):
     __tablename__ = 'tbl_borrows'
     id_borrow = db.Column(UUID(as_uuid = True), primary_key = True, default = uuid.uuid4)
-    return_date = db.Column(db.DateTime, onupdate = datetime.now() + timedelta(days = int(os.getenv('RETURN_DATE'))))
+    return_date = db.Column(db.DateTime, onupdate = datetime.now() + timedelta(days = int(os.getenv('RETURN_DATE',7))))
     status = db.Column(db.Boolean, default = False)
     user = db.relationship('Users', backref='tbl_borrows', uselist = False)
     id_user = db.Column(UUID(as_uuid=True), db.ForeignKey('tbl_users.id_user'))

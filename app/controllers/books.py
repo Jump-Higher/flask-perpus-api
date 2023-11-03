@@ -1,6 +1,6 @@
-import os, cloudinary
+import os, cloudinary, requests
 from cloudinary import uploader
-from flask import request,make_response
+from flask import request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from uuid import UUID, uuid4
 from app import db, response_handler
@@ -202,9 +202,7 @@ def private_books():
                     "bookshelf" : BookshelvesSchema().dump(i.bookshelf)
                 }) 
                 
-            response = make_response(response_handler.ok_with_meta(data,meta))
-            response.headers['ngrok-skip-browser-warning'] = 'any_value'
-            return response
+            return response_handler.ok_with_meta(data,meta)
         else:
             return response_handler.unautorized()
     except Exception as err:
@@ -232,10 +230,7 @@ def books():
                 "category" : CategoriesSchema().dump(i.category),
                 "bookshelf" : BookshelvesSchema().dump(i.bookshelf)
             }) 
-            
-        response = make_response(response_handler.ok_with_meta(data,meta))
-        response.headers['ngrok-skip-browser-warning'] = 'any_value'
-        return response
+        return response_handler.ok_with_meta(data,meta)
     except Exception as err:
         return response_handler.bad_request(str(err))
         

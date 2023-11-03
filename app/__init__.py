@@ -10,6 +10,7 @@ import os
 
 app = Flask(__name__)
 
+
 # Load Config from obj
 app.config.from_object(Db_config)
 app.config.from_object(Mail_config)
@@ -27,7 +28,6 @@ jwt = JWTManager(app)
 app.wsgi_app = PrefixMiddleware(app.wsgi_app, prefix='/perpus-api/v1')
 
 
-
 # Secret key for password reset
 secret_key = app.config['SECRET_KEY'] = os.getenv('EMAIL_SECRET_KEY')
 
@@ -37,7 +37,6 @@ mail = Mail(app)
 
 CORS(app)
 
- 
 from app.models import roles, users, cart, authors, books, bookshelves, borrows, borrow_details, categories, publishers, returns, return_details
 
 # Create Roles

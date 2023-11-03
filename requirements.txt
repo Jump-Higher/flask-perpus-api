@@ -9,3 +9,4 @@ cloudinary == 1.33.0
 itsdangerous == 2.1.2 
 Flask-Mail == 0.9.1 
 Flask-Cors == 3.0.10 
+requests

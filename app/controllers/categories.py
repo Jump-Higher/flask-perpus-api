@@ -124,26 +124,30 @@ def categories():
         current_user = get_jwt_identity() 
         
         if current_user['id_role'] in admin_auth():
-            # Get param from url
+            # Get params from url
             page = request.args.get('page', 1, type=int)
             per_page = request.args.get('per_page', int(os.getenv('PER_PAGE')), type=int)
-            # Check is page exceed or not
-            page_exceeded = meta_data(Categories,page,per_page)
+            category_filter = request.args.get('search')  # Get the 'category' parameter
+            
+            # Check if page exceeds
+            page_exceeded = meta_data(Categories, page, per_page)
             if page_exceeded: 
                 return response_handler.not_found("Page Not Found") 
             
-            # Query data categories all
-            categories = order_by(Categories, 'page', page, 'per_page', per_page)
+            # Query data categories with optional filtering by 'category'
+            if category_filter:
+                categories = Categories.query.filter_by(category=category_filter).paginate(page=page, per_page=per_page)
+            else:
+                categories = Categories.query.paginate(page=page, per_page=per_page)
             
-            # Iterate to data
-            data = []
-            for i in select_all(Categories):
-                data.append(CategoriesSchema().dump(i))
+            # Iterate through data
+            data = [CategoriesSchema().dump(category) for category in categories.items]
  
             return response_handler.ok_with_meta(data, categories)
         else:
-            return response_handler.unautorized()
+            return response_handler.unauthorized()
         
     except Exception as err:
         return response_handler.bad_request(str(err))
- 
+
+

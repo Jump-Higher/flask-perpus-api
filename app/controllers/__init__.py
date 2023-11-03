@@ -3,10 +3,6 @@ from app import secret_key, os, mail, response_handler,app
 from flask_mail import Message
 from app.models import select_users_role
 
-# @app.after_request
-# def ngrok_header(response):
-#     response.headers['ngrok-skip-browser-warning'] = 'any_value'
-#     return response
 
 def gender():
     gender = ['female','male','prefer not say']
@@ -15,7 +11,7 @@ def gender():
 def check_update(json_body, data, array):
     check_update = all(json_body[field] == getattr(data, field) for field in array)
     return check_update
-
+ 
 # CRUL 
 def super_auth():
     authorized_roles = str({select_users_role('SUPER_ADMIN_ROLE')})

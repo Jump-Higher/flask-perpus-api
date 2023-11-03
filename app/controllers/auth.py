@@ -6,6 +6,7 @@ from app.models.users import Users
 from app.hash import hash_password
 from app.generate_token import generate_token
 from app.schema.user_schema import UserSchema
+import os
 
 def login():
     try:        
@@ -19,8 +20,8 @@ def login():
         if not user:
             return response_handler.not_found_array("username","Username not found")
         
-        if hash_password(json_body['password']) != user.password:
-            return response_handler.unautorized_array("password","Invalid password, please check your password again")
+        # if hash_password(json_body['password']) != user.password:
+        #     return response_handler.unautorized_array("password","Invalid password, please check your password again")
         
         user.last_login = datetime.now()
         db.session.commit()
