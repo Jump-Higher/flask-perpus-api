@@ -189,7 +189,7 @@ def list_user():
             data = []
             for i in meta.items:
                 data.append({
-                    "user" : UserSchema(only=('id_user','name','username','picture','last_login')).dump(i),
+                    "user" : UserSchema(only=('id_user','name','username','picture','last_login','status')).dump(i),
                     # "address" : AddressSchema().dump(i.address),
                     "role" : RolesSchema(only=('id_role','role')).dump(i.role)
                 })

@@ -23,7 +23,7 @@ class UserSchema(Schema):
       id_role = fields.Nested(RolesSchema, attribute='tbl_roles', many=False, data_key='role')
       id_address = fields.Nested(AddressSchema, attribute='tbl_addresses', many=False, data_key='address')
       picture = fields.Str(validate=validate.Length(max=200))
-      is_active = fields.Boolean()
+      status = fields.Boolean()
       created_at = fields.DateTime(dump_only = True)
       updated_at = fields.DateTime(dump_only = True)
       last_login = fields.DateTime(dump_only = True)
