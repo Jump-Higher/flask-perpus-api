@@ -1,46 +1,68 @@
 from itsdangerous import URLSafeTimedSerializer
 from app import secret_key, os, mail, response_handler,app
 from flask_mail import Message
-from app.models import select_users_role
+from app.models import select_users_role, meta_data
+from flask import render_template
 
-# @app.after_request
-# def ngrok_header(response):
-#     response.headers['ngrok-skip-browser-warning'] = 'any_value'
-#     return response
 
+# Get param for pagination
+def get_read_param(request):
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('limit', int(os.getenv('PER_PAGE')), type=int)
+    search = request.args.get('search')
+    
+    return {
+        'page': page,
+        'per_page': per_page,
+        'search': search
+    }
+
+# Paginate, filter, and limit data
+def get_paginated_data(model,page,per_page,field,filter=None):
+    # Check if page exceeds
+    page_exceeded = meta_data(model, page, per_page)
+    if page_exceeded: 
+        return None  
+    
+    if filter:
+        attribute = getattr(model, field) if hasattr(model, field) else None
+        if attribute is not None:
+            data = model.query.filter(attribute.like(f'%{filter}%')).paginate(page=page, per_page=per_page)
+        else:
+            data = model.query.paginate(page=page, per_page=per_page)
+    else:
+        data = model.query.paginate(page=page, per_page=per_page)
+    
+    return data
+
+# Gender in user controller
 def gender():
-    gender = ['female','male','prefer not say']
-    return gender
+    return ['female','male','prefer not say']
+
 # Check update 
 def check_update(json_body, data, array):
-    check_update = all(json_body[field] == getattr(data, field) for field in array)
-    return check_update
+    return all(json_body[field] == getattr(data, field) for field in array)
 
-# CRUL 
-def super_auth():
-    authorized_roles = str({select_users_role('SUPER_ADMIN_ROLE')})
-    return authorized_roles
-
-def public_auth():
-    authorized_roles = str({select_users_role('SUPER_ADMIN_ROLE'), 
+# Authentication
+def auth(param):
+    if param == 'public':
+        return str({select_users_role('SUPER_ADMIN_ROLE'), 
                             select_users_role('USER_ROLE'),
                             select_users_role('ADMIN_ROLE')})
-    return authorized_roles
-
-
-def admin_auth():
-    authorized_roles = str({select_users_role('SUPER_ADMIN_ROLE'), 
+    elif param == 'user':
+        return str({select_users_role('USER_ROLE')})
+    elif param == 'admin':
+        return str({select_users_role('SUPER_ADMIN_ROLE'), 
                             select_users_role('ADMIN_ROLE')})
-    return authorized_roles
+    elif param == 'super':
+        return str({select_users_role('SUPER_ADMIN_ROLE')})
 
-def user_auth():
-    authorized_roles = str({select_users_role('USER_ROLE')})
-    return authorized_roles
-
+# Generate token for email
 def generate_token(email):
     serializer = URLSafeTimedSerializer(secret_key)
     return serializer.dumps(email)
 
+# Send email
 def send_email(email,subjectBody,htmlBody):
     send = Message(
                  subject = subjectBody,
@@ -50,47 +72,10 @@ def send_email(email,subjectBody,htmlBody):
             )
     return mail.send(send)
 
-def reset_password_body(url,user):
-    html_body = f'''
-    <html>
-        <body style="font-family: Arial, sans-serif;">
-            <div style="background-color: #f0f0f0; padding: 20px; border-radius: 5px;">
-                <h1 style="color: #007BFF;">Reset Your Password</h1>
-                <p>Hello {user},</p>
-                <p>A password reset for your account was requested.</p>
-                <p>Please click the button below to change your password.</p>
-                <p style="text-align: left;">
-                    <a href="{url}" style="display: inline-block; background-color: #007BFF; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
-                        Reset Password
-                    </a>
-                </p>
-                <p>Note that this link is valid for 1 hour. After the time limit has expired, you will have to resubmit the request for a password reset.</p>
-                <p>If you didn't request a password reset, please ignore this email.</p>
-            </div>
-        </body>
-    </html>
-    '''
-    return html_body
+# render template for reset password email
+def reset_password_template(url,user):
+    return render_template('reset_password.html',url=url,user=user)
 
-
-def activation_body(url, user):
-    html_body = f'''
-    <html>
-        <body style="font-family: Arial, sans-serif;">
-            <div style="background-color: #f0f0f0; padding: 20px; border-radius: 5px;">
-                <h1 style="color: #007BFF;">Activate Your Account</h1>
-                <p>Hello {user},</p>
-                <p>Thank you for signing up with us!</p>
-                <p>Please click the button below to activate your account.</p>
-                <p style="text-align: left;">
-                    <a href="{url}" style="display: inline-block; background-color: #007BFF; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
-                        Activate Account
-                    </a>
-                </p>
-                <p>Note that this activation link is valid for 1 hour. After the time limit has expired, you might need to request a new activation link.</p>
-                <p>If you didn't sign up for an account, please ignore this email.</p>
-            </div>
-        </body>
-    </html>
-    '''
-    return html_body
+# render template for activation account 
+def activation_account_template(url, user):
+    return render_template('activation_account.html',url=url,user=user)

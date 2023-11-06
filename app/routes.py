@@ -1,10 +1,10 @@
 from app import app
-from app.controllers import user, user_transaction, admin_transaction, auth, authors, bookshelves, categories, publishers, roles, books
+from app.controllers import user, user_transaction, admin_transaction, authentication, authors, bookshelves, categories, publishers, roles, books
 @app.route('/')
 def home():
     return 'This is Home Page for Perpustakaan App'
 
-app.route('/login', methods = ['POST'])(auth.login)
+app.route('/login', methods = ['POST'])(authentication.login)
 
 # Users
 app.route('/register', methods = ['POST'])(user.register)

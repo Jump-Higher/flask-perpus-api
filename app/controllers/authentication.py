@@ -26,13 +26,13 @@ def login():
         db.session.commit()
         data = generate_token({"id_user":user.id_user,
                                 "id_role":user.id_role, 
-                                "role":user.role.name,
+                                "role":user.role.role,
                                 "status": user.status}
                               )
         data.update({
             "id_user":user.id_user,
             "id_role":user.id_role, 
-            "role":user.role.name,
+            "role":user.role.role,
             "status": user.status
         })
         

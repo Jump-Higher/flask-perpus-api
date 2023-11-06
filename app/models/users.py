@@ -65,7 +65,7 @@ def select_user_email(email):
 def create_super_admin():
     with app.app_context():
         try:
-            super_admin = Roles.query.filter_by(name=os.getenv('SUPER_ADMIN_ROLE')).first()
+            super_admin = Roles.query.filter_by(role=os.getenv('SUPER_ADMIN_ROLE')).first()
             if super_admin and not select_super_admin_user(super_admin.id_role):
                 
                 # Make Address for Super Admin

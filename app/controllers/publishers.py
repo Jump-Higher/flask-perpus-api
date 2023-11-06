@@ -1,11 +1,11 @@
 from flask_jwt_extended import jwt_required, get_jwt_identity 
-from app.models import select_all, select_by_id, filter_by, meta_data, order_by
+from app.models import select_all, select_by_id
 from app.models.publishers import Publishers
 from app.schema.publishers_schema import PublishersSchema
 from flask import request
 from app import response_handler,db
 from uuid import UUID
-from app.controllers import admin_auth, check_update, public_auth
+from app.controllers import auth, check_update, get_paginated_data, get_read_param
 import os
 
 @jwt_required()
@@ -13,7 +13,7 @@ def create_publisher():
     try:
         # Check Auth
         current_user = get_jwt_identity()
-        if current_user['id_role'] in admin_auth(): 
+        if current_user['id_role'] in auth('admin'): 
             json_body = request.json
             
             # Checking errors with schema
@@ -50,7 +50,7 @@ def create_publisher():
 def publisher(id):
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in public_auth():
+        if current_user['id_role'] in auth('public'):
             # Check id is UUID or not
             UUID(id)
             # Check Publisher is exist or not
@@ -79,7 +79,7 @@ def publisher(id):
 def update_publisher(id):
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in admin_auth():
+        if current_user['id_role'] in auth('admin'):
             # Check id is UUID or not
             UUID(id)
             json_body = request.json
@@ -138,23 +138,22 @@ def update_publisher(id):
 def publishers():
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in admin_auth():
-            # Get param from url
-            page = request.args.get('page', 1, type=int)
-            per_page = request.args.get('per_page', int(os.getenv('PER_PAGE')), type=int)
-            # Check is page exceed or not
-            page_exceeded = meta_data(Publishers,page,per_page)
-            if page_exceeded: 
-                return response_handler.not_found("Page Not Found") 
+        if current_user['id_role'] in auth('admin'):
             
-            # Query data publisher all
-            publishers = order_by(Publishers, 'page', page, 'per_page', per_page)
-             # Iterate to data
-            data = []
-            for i in select_all(Publishers):
-                data.append(PublishersSchema().dump(i))
- 
-            return response_handler.ok_with_meta(data, publishers)
+              # Get param from url with get_read_param function in init
+            params = get_read_param(request) 
+            page, per_page, filter = params.values()
+            
+            # Get pagination data from get_paginated_data function in init
+            publishers_data = get_paginated_data(Publishers,page,per_page,field='name',filter=filter)
+            
+            # return data
+            if publishers_data is not None:
+                data = [PublishersSchema(only=('id_publisher','name','email','phone_number')).dump(publisher) for publisher in publishers_data.items]
+                return response_handler.ok_with_meta(data, publishers_data)
+            else:
+                return response_handler.not_found('Page Not Found')
+  
         else:
             return response_handler.unautorized()
         

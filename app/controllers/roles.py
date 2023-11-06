@@ -5,7 +5,7 @@ from app.schema.roles_schema import RolesSchema
 from app import response_handler
 from app.models.roles import Roles
 from app import db 
-from app.controllers import admin_auth, super_auth
+from app.controllers import auth 
 from uuid import UUID
 import os
  
@@ -14,7 +14,7 @@ def create_role():
     try: 
         # Check Auth
         current_user = get_jwt_identity()
-        if current_user['id_role'] in super_auth(): 
+        if current_user['id_role'] in auth('super'): 
             json_body = request.json
             
             # Checking errors with schema
@@ -47,7 +47,7 @@ def create_role():
 def role(id):
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in admin_auth():
+        if current_user['id_role'] in auth('admin'):
             # Check id is UUID or not
             UUID(id)
             # Check Role is exist or not
@@ -73,7 +73,7 @@ def role(id):
 def update_role(id):
     try: 
         current_user = get_jwt_identity()
-        if current_user['id_role'] in super_auth():
+        if current_user['id_role'] in auth('super'):
             # Check  id is UUID or not
             UUID(id)
             json_body = request.json
@@ -122,7 +122,7 @@ def roles():
     try:
         current_user = get_jwt_identity() 
         
-        if current_user['id_role'] in admin_auth():
+        if current_user['id_role'] in auth('admin'):
             # Get param from url
             page = request.args.get('page', 1, type=int)
             per_page = request.args.get('per_page', int(os.getenv('PER_PAGE')), type=int)

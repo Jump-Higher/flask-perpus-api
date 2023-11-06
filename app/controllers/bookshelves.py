@@ -3,7 +3,7 @@ from flask import request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from uuid import UUID
 from app import db, response_handler
-from app.controllers import user_auth, admin_auth, public_auth
+from app.controllers import auth,get_paginated_data,get_read_param
 from app.models import select_by_id, select_all, filter_by, order_by, meta_data
 from app.models.bookshelves import Bookshelves 
 from app.schema.bookshelves_schema import BookshelvesSchema
@@ -13,7 +13,7 @@ def create_bookshelf():
     try: 
         # Check Auth
         current_user = get_jwt_identity()
-        if current_user['id_role'] in admin_auth(): 
+        if current_user['id_role'] in auth('admin'): 
             json_body = request.json
             
             # Checking errors with schema
@@ -46,7 +46,7 @@ def create_bookshelf():
 def bookshelf(id):
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in public_auth():
+        if current_user['id_role'] in auth('pbulic'):
             # Check id is UUID or not
             UUID(id)
             # Check Bookshelf is exist or not
@@ -72,7 +72,7 @@ def bookshelf(id):
 def update_bookshelf(id):
     try: 
         current_user = get_jwt_identity()
-        if current_user['id_role'] in admin_auth():
+        if current_user['id_role'] in auth('admin'):
             # Check  id is UUID or not
             UUID(id)
             json_body = request.json
@@ -121,26 +121,20 @@ def bookshelves():
     try:
         current_user = get_jwt_identity() 
         
-        if current_user['id_role'] in admin_auth():
+        if current_user['id_role'] in auth('admin'):
+            # Get param from url with get_read_param function in init
+            params = get_read_param(request) 
+            page, per_page, filter = params.values()
             
-            # Get param from url
-            page = request.args.get('page', 1, type=int)
-            per_page = request.args.get('per_page', int(os.getenv('PER_PAGE')), type=int)
-            # Check is page exceed or not
-            page_exceeded = meta_data(Bookshelves,page,per_page)
-            if page_exceeded: 
-                return response_handler.not_found("Page Not Found") 
-            
-            # Query data bookshelves all
-            bookshelves = order_by(Bookshelves, 'page', page, 'per_page', per_page)
-            
-            # Iterate to data
-            data = []
-            for i in select_all(Bookshelves):
-                data.append(BookshelvesSchema().dump(i))
-                
-                
-            return response_handler.ok_with_meta(data, bookshelves)
+            # Get pagination data from get_paginated_data function in init
+            bookshelves_data = get_paginated_data(Bookshelves,page,per_page,field='bookshelf',filter=filter)
+            # return data
+            if bookshelves_data is not None:
+                data = [BookshelvesSchema(only=('id_bookshelf','bookshelf')).dump(bookshelf) for bookshelf in bookshelves_data.items]
+                return response_handler.ok_with_meta(data, bookshelves_data)
+            else:
+                return response_handler.not_found('Page Not Found')
+             
         else:
             return response_handler.unautorized()
         

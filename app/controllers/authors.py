@@ -5,7 +5,7 @@ from app.schema.authors_schema import AuthorsSchema
 from flask import request
 from app import response_handler,db
 from uuid import UUID
-from app.controllers import user_auth,public_auth,admin_auth,check_update
+from app.controllers import auth,check_update,get_paginated_data,get_read_param
 import os
   
 @jwt_required()
@@ -13,7 +13,7 @@ def create_author():
     try:
         # Check Auth
         current_user = get_jwt_identity()
-        if current_user['id_role'] in admin_auth(): 
+        if current_user['id_role'] in auth('admin'): 
             json_body = request.json
             
             # Checking errors with schema
@@ -53,7 +53,7 @@ def create_author():
 def author(id):
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in public_auth():
+        if current_user['id_role'] in auth('public'):
             # Check id is UUID or not
             UUID(id)
             # Check Author is exist or not
@@ -82,7 +82,7 @@ def author(id):
 def update_author(id):
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in admin_auth():
+        if current_user['id_role'] in auth('admin'):
             # Check  id is UUID or not
             UUID(id)
             json_body = request.json
@@ -143,25 +143,20 @@ def update_author(id):
 def authors():
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in admin_auth():
-            # Get param from url
-            page = request.args.get('page', 1, type=int)
-            per_page = request.args.get('per_page', int(os.getenv('PER_PAGE')), type=int)
-            # Check is page exceed or not
-            page_exceeded = meta_data(Authors,page,per_page)
-            if page_exceeded: 
-                return response_handler.not_found("Page Not Found") 
+        if current_user['id_role'] in auth('admin'):
+            # Get param from url with get_read_param function in init
+            params = get_read_param(request) 
+            page, per_page, filter = params.values()
             
-            # add data from model
-            authors = order_by(Authors, 'page', page, 'per_page', per_page)
-            # Iterate to data
-            data = []
-            for i in select_all(Authors):
-                data.append(AuthorsSchema().dump(i))
-                 
-            return response_handler.ok_with_meta(data, authors)
-        else:
-            return response_handler.unautorized()
+            # Get pagination data from get_paginated_data function in init
+            authors_data = get_paginated_data(Authors,page,per_page,field='name',filter=filter)
+            
+            # return data
+            if authors_data is not None:
+                data = [AuthorsSchema(only=('id_author','name','email','gender','phone_number')).dump(author) for author in authors_data.items]
+                return response_handler.ok_with_meta(data, authors_data)
+            else:
+                return response_handler.not_found('Page Not Found')
         
     except Exception as err:
         return response_handler.bad_request(str(err))

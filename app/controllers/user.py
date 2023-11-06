@@ -2,7 +2,7 @@ from flask import request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 from app import db, secret_key, response_handler
-from app.controllers import generate_token, send_email, reset_password_body, activation_body, admin_auth
+from app.controllers import generate_token, send_email, reset_password_template, activation_account_template, auth
 from app.hash import hash_password
 from app.models import select_all, meta_data, select_by_id, filter_by
 from app.models.addresses import Addresses
@@ -175,7 +175,7 @@ def update_user(id):
 def list_user():
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in admin_auth():
+        if current_user['id_role'] in auth('admin'):
             # Get param from url
             page = request.args.get('page', 1, type=int)
             per_page = request.args.get('per_page', int(os.getenv('PER_PAGE')), type=int)
@@ -189,9 +189,9 @@ def list_user():
             data = []
             for i in meta.items:
                 data.append({
-                    "user" : UserSchema().dump(i),
-                    "address" : AddressSchema().dump(i.address),
-                    "role" : RolesSchema().dump(i.role)
+                    "user" : UserSchema(only=('id_user','name','username','picture','last_login')).dump(i),
+                    # "address" : AddressSchema().dump(i.address),
+                    "role" : RolesSchema(only=('id_role','role')).dump(i.role)
                 })
                 
             return response_handler.ok_with_meta(data,meta)
@@ -218,7 +218,7 @@ def reset_password():
         reset_token = token.replace('.','|')
         # Add html url
         reset_url = os.getenv('RESET_PASSWORD_FE')+'/'+reset_token
-        reset_body = reset_password_body(reset_url,user.name)
+        reset_body = reset_password_template(reset_url,user.name)
         
         #Send mail
         send_email(email,"Reset Password",reset_body)
@@ -260,7 +260,7 @@ def activation_email():
             activation_token = token.replace('.','|')
             # Add html url
             activation_url = os.getenv('ACTIVATION_ACC_FE')+'/'+activation_token
-            activate_body = activation_body(activation_url,user.username)
+            activate_body = activation_account_template(activation_url,user.username)
             #Send mail
             send_email(user.email,"Activation Account",activate_body)
         

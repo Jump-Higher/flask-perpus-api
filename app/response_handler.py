@@ -17,12 +17,13 @@ def ok_with_meta(data, meta):
             "data": data,
             "meta":  {
                 "page": meta.page,
-                "pages": meta.pages,
+                "pages": meta.pages, 
+                "limit": meta.per_page,
                 "total_count": meta.total,
                 "prev_page": meta.prev_num,
                 "next_page": meta.next_num,
                 "has_prev": meta.has_prev,
-                "has_next": meta.has_next
+                "has_next": meta.has_next,
             }
     }
     return make_response(jsonify(response)),HTTPStatus.OK.value

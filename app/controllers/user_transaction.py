@@ -11,14 +11,14 @@ from app.models.borrows import Borrows
 from app.models.borrow_details import BorrowDetails
 from app.models.returns import limit_borrow, Returns
 from app.models.books import select_book_id
-from app.controllers import user_auth
+from app.controllers import auth
 
 @jwt_required()
 def create_cart(id):
     try: 
         # Check Auth
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth():
+        if current_user['id_role'] in auth('public'):
             # Check id is UUID or not
             UUID(id)
             # Check Book is exist or not
@@ -62,7 +62,7 @@ def borrow(id):
         current_user = get_jwt_identity()
         if current_user['status'] is False:
             return response_handler.unautorized_with_message("Please activate your account to borrow book")
-        elif current_user['id_role'] in user_auth() and current_user['status'] is True:
+        elif current_user['id_role'] in auth('public') and current_user['status'] is True:
             # Check id is UUID or not
             UUID(id)
             
@@ -113,7 +113,7 @@ def borrow(id):
 def co_cart(id):
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth():
+        if current_user['id_role'] in auth('public'):
             # Check id is UUID or not
             UUID(id)
             # Check user co same with user acc
@@ -167,7 +167,7 @@ def co_cart(id):
 def carts():
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth():
+        if current_user['id_role'] in auth('public'):
             
             # Get param from url
             page = request.args.get('page', 1, type=int)
@@ -198,7 +198,7 @@ def carts():
 def delete_cart(id):
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in user_auth():
+        if current_user['id_role'] in auth('public'):
             UUID(id)
             # Check user co same with user acc
             cart = select_cart(id)

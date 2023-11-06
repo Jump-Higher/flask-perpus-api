@@ -1,11 +1,11 @@
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.models import select_by_id, select_all, filter_by, meta_data, order_by
+from app.models import select_by_id, select_all, filter_by
 from flask import request
 from app.schema.categories_schema import CategoriesSchema
 from app import response_handler
 from app.models.categories import Categories
 from app import db
-from app.controllers import admin_auth, public_auth
+from app.controllers import auth, get_paginated_data, get_read_param
 from uuid import UUID
 import os
 
@@ -14,7 +14,7 @@ def create_category():
     try: 
         # Check Auth
         current_user = get_jwt_identity()
-        if current_user['id_role'] in admin_auth(): 
+        if current_user['id_role'] in auth('admin'): 
             json_body = request.json
             
             # Checking errors with schema
@@ -47,7 +47,7 @@ def create_category():
 def category(id):
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in public_auth():
+        if current_user['id_role'] in auth('admin'):
             # Check id is UUID or not
             UUID(id)
             # Check Category is exist or not
@@ -73,7 +73,7 @@ def category(id):
 def update_category(id):
     try: 
         current_user = get_jwt_identity()
-        if current_user['id_role'] in admin_auth():
+        if current_user['id_role'] in auth('admin'):
             # Check  id is UUID or not
             UUID(id)
             json_body = request.json
@@ -117,30 +117,27 @@ def update_category(id):
     
     except Exception as err:
         return response_handler.bad_gateway(str(err))
- 
+
 @jwt_required()
 def categories():
     try:
         current_user = get_jwt_identity() 
         
-        if current_user['id_role'] in admin_auth():
-            # Get param from url
-            page = request.args.get('page', 1, type=int)
-            per_page = request.args.get('per_page', int(os.getenv('PER_PAGE')), type=int)
-            # Check is page exceed or not
-            page_exceeded = meta_data(Categories,page,per_page)
-            if page_exceeded: 
-                return response_handler.not_found("Page Not Found") 
+        if current_user['id_role'] in auth('admin'):
+
+            # Get param from url with get_read_param function in init
+            params = get_read_param(request) 
+            page, per_page, filter = params.values()
             
-            # Query data categories all
-            categories = order_by(Categories, 'page', page, 'per_page', per_page)
+            # Get pagination data from get_paginated_data function in init
+            categories_data = get_paginated_data(Categories,page,per_page,field='category',filter=filter)
             
-            # Iterate to data
-            data = []
-            for i in select_all(Categories):
-                data.append(CategoriesSchema().dump(i))
- 
-            return response_handler.ok_with_meta(data, categories)
+            # return data
+            if categories_data is not None:
+                data = [CategoriesSchema(only=('id_category','category')).dump(category) for category in categories_data.items]
+                return response_handler.ok_with_meta(data, categories_data)
+            else:
+                return response_handler.not_found('Page Not Found')
         else:
             return response_handler.unautorized()
         

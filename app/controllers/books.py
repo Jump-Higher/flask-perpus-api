@@ -4,7 +4,7 @@ from flask import request,make_response
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from uuid import UUID, uuid4
 from app import db, response_handler
-from app.controllers import user_auth, admin_auth, public_auth
+from app.controllers import auth
 from app.models import select_by_id, select_all, filter_by, order_by, meta_data
 from app.models.books import Books, books_all,select_book_id
 from app.schema.books_schema import BooksSchema
@@ -19,7 +19,7 @@ def create_book():
     try: 
         # Check Auth
         current_user = get_jwt_identity()
-        if current_user['id_role'] in admin_auth(): 
+        if current_user['id_role'] in auth('admin'): 
             form_body = request.form
               
             # Checking errors with schema
@@ -74,7 +74,7 @@ def create_book():
 def book(id):
     try:
         current_user = get_jwt_identity()
-        if current_user['id_role'] in public_auth():
+        if current_user['id_role'] in auth('public'):
             # Check id is UUID or not
             UUID(id)
             # Check Book is exist or not
@@ -103,7 +103,7 @@ def book(id):
 def update_book(id):
     try: 
         current_user = get_jwt_identity()
-        if current_user['id_role'] in admin_auth():
+        if current_user['id_role'] in auth('admin'):
             # Check  id is UUID or not
             UUID(id)
             form_body = request.form
@@ -180,7 +180,7 @@ def private_books():
     try:
     # Get param from url
         current_user = get_jwt_identity()
-        if current_user['id_role'] in admin_auth():
+        if current_user['id_role'] in auth('admin'):
             page = request.args.get('page', 1, type=int)
             per_page = request.args.get('per_page', int(os.getenv('PER_PAGE')), type=int)
             
@@ -195,15 +195,14 @@ def private_books():
             data = []
             for i in meta.items:
                 data.append({
-                    "book" : BooksSchema().dump(i),
-                    "author" : AuthorsSchema().dump(i.author),
-                    "publisher" : PublishersSchema().dump(i.publisher),
-                    "category" : CategoriesSchema().dump(i.category),
-                    "bookshelf" : BookshelvesSchema().dump(i.bookshelf)
-                }) 
+                    "book" : BooksSchema(only=('id_book','title','picture','stock')).dump(i),
+                    "author" : AuthorsSchema(only=('id_author','name')).dump(i.author),
+                    "publisher" : PublishersSchema(only=('id_publisher','name')).dump(i.publisher),
+                    "category" : CategoriesSchema(only=('id_category','category')).dump(i.category),
+                    "bookshelf" : BookshelvesSchema(only=('id_bookshelf','bookshelf')).dump(i.bookshelf)
+                })  
                 
             response = make_response(response_handler.ok_with_meta(data,meta))
-            response.headers['ngrok-skip-browser-warning'] = 'any_value'
             return response
         else:
             return response_handler.unautorized()
@@ -226,15 +225,14 @@ def books():
         data = []
         for i in meta.items:
             data.append({
-                "book" : BooksSchema().dump(i),
-                "author" : AuthorsSchema().dump(i.author),
-                "publisher" : PublishersSchema().dump(i.publisher),
-                "category" : CategoriesSchema().dump(i.category),
-                "bookshelf" : BookshelvesSchema().dump(i.bookshelf)
+                "book" : BooksSchema(only=('id_book','title','picture','stock')).dump(i),
+                "author" : AuthorsSchema(only=('id_author','name')).dump(i.author),
+                "publisher" : PublishersSchema(only=('id_publisher','name')).dump(i.publisher),
+                "category" : CategoriesSchema(only=('id_category','category')).dump(i.category),
+                "bookshelf" : BookshelvesSchema(only=('id_bookshelf','bookshelf')).dump(i.bookshelf)
             }) 
             
         response = make_response(response_handler.ok_with_meta(data,meta))
-        response.headers['ngrok-skip-browser-warning'] = 'any_value'
         return response
     except Exception as err:
         return response_handler.bad_request(str(err))

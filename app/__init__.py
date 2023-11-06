@@ -37,7 +37,7 @@ mail = Mail(app)
 
 CORS(app)
 
- 
+
 from app.models import roles, users, cart, authors, books, bookshelves, borrows, borrow_details, categories, publishers, returns, return_details
 
 # Create Roles

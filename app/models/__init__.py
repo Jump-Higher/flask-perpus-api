@@ -18,7 +18,7 @@ def select_by_id(model,id):
     return query
  
 def select_users_role(role):
-    query = select(Roles.id_role).where(Roles.name == os.getenv(role))
+    query = select(Roles.id_role).where(Roles.role == os.getenv(role))
     result = db.session.execute(query)
     id_role = result.scalar()
     return id_role
