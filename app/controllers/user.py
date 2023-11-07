@@ -60,6 +60,33 @@ def register():
         return response_handler.bad_gateway(str(err))
 
 @jwt_required()
+def profile(id):
+    try:
+        current_user = get_jwt_identity()
+        if current_user['id_user'] == str(id):
+            
+            # Check id is UUID or not
+            UUID(id)
+            # Check user is exist or not 
+            users = select_by_id(Users,id)
+            if users == None:
+                return response_handler.not_found_array("id_user",'User not Found')
+            
+            data = {"user" : UserSchema().dump(users),
+                    "address" : AddressSchema().dump(users.address),
+                    "role" : RolesSchema().dump(users.role)}
+            
+            return response_handler.ok(data,"")
+        else:
+            return response_handler.unautorized()
+        
+    except ValueError:
+        return response_handler.bad_request_array("id_user","Invalid Id")
+        
+    except Exception as err:
+        return response_handler.bad_gateway(str(err))
+
+@jwt_required()
 def user(id):
     try:
         current_user = get_jwt_identity()
@@ -72,7 +99,7 @@ def user(id):
             if users == None:
                 return response_handler.not_found_array("id_user",'User not Found')
             
-            data = {"user" : UserSchema().dump(users),
+            data = {"user" : UserSchema(exclude=('password',)).dump(users),
                     "address" : AddressSchema().dump(users.address),
                     "role" : RolesSchema().dump(users.role)}
             
@@ -190,7 +217,7 @@ def list_user():
             for i in meta.items:
                 data.append({
                     "user" : UserSchema(only=('id_user','name','username','picture','last_login','status')).dump(i),
-                    # "address" : AddressSchema().dump(i.address),
+                    #"address" : AddressSchema().dump(i.address),
                     "role" : RolesSchema(only=('id_role','role')).dump(i.role)
                 })
                 
