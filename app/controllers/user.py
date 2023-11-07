@@ -60,17 +60,11 @@ def register():
         return response_handler.bad_gateway(str(err))
 
 @jwt_required()
-def profile(id):
+def profile():
     try:
         current_user = get_jwt_identity()
-        if current_user['id_user'] == str(id):
-            
-            # Check id is UUID or not
-            UUID(id)
-            # Check user is exist or not 
-            users = select_by_id(Users,id)
-            if users == None:
-                return response_handler.not_found_array("id_user",'User not Found')
+        if current_user['id_user'] == current_user['id_user']:
+            users = select_by_id(Users,current_user['id_user']) 
             
             data = {"user" : UserSchema().dump(users),
                     "address" : AddressSchema().dump(users.address),
@@ -78,10 +72,7 @@ def profile(id):
             
             return response_handler.ok(data,"")
         else:
-            return response_handler.unautorized()
-        
-    except ValueError:
-        return response_handler.bad_request_array("id_user","Invalid Id")
+            return response_handler.unautorized() 
         
     except Exception as err:
         return response_handler.bad_gateway(str(err))
