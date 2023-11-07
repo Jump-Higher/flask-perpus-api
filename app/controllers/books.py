@@ -237,3 +237,22 @@ def books():
     except Exception as err:
         return response_handler.bad_request(str(err))
         
+
+from app.models import Authors,Publishers,Bookshelves,Categories
+def dropdown_books():
+    try:
+        data_author = [AuthorsSchema(only=('id_author','name')).dump(author) for author in select_all(Authors)]
+        data_publisher = [PublishersSchema(only=('id_publisher','name')).dump(publisher) for publisher in select_all(Publishers)]
+        data_bookshelf = [BookshelvesSchema(only=('id_bookshelf','bookshelf')).dump(bookshelf) for bookshelf in select_all(Bookshelves)]
+        data_category = [CategoriesSchema(only=('id_category','category')).dump(category) for category in select_all(Categories)]
+        
+        data = {
+            "category": data_category,
+            "author": data_author,
+            "bookshelf": data_bookshelf,
+            "publisher": data_publisher
+        }
+
+        return response_handler.ok(data,"Success")
+    except Exception as err:
+        return response_handler.bad_request(str(err))

@@ -17,6 +17,9 @@ app.route('/user/change_password/<token>', methods = ['PATCH'])(user.change_pass
 app.route('/user/activation_email', methods = ['POST'])(user.activation_email)
 app.route('/user/activation_account/<token>', methods = ['PATCH'])(user.activation_account)
 
+#dropdown
+app.route('/dropdown/books', methods = ['GET'])(books.dropdown_books)
+
 
 # Roles
 app.route('/role/create', methods = ['POST'])(roles.create_role)
