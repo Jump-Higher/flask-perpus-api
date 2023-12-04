@@ -8,14 +8,15 @@ app.route('/login', methods = ['POST'])(authentication.login)
 
 # Users
 app.route('/register', methods = ['POST'])(user.register)
+app.route('/profile', methods = ['GET'])(user.profile)
 app.route('/user/<id>', methods = ['GET'])(user.user)
 app.route('/user/update/<id>', methods = ['PATCH'])(user.update_user)
 app.route('/users', methods = ['GET'])(user.list_user)
-app.route('/profile', methods = ['GET'])(user.profile)
 app.route('/user/reset_password', methods = ['POST'])(user.reset_password)
 app.route('/user/change_password/<token>', methods = ['PATCH'])(user.change_password)
-app.route('/user/activation_email', methods = ['POST'])(user.activation_email)
+app.route('/user/activation_email', methods = ['GET'])(user.activation_email)
 app.route('/user/activation_account/<token>', methods = ['PATCH'])(user.activation_account)
+
 
 #dropdown
 app.route('/dropdown/books', methods = ['GET'])(books.dropdown_books)

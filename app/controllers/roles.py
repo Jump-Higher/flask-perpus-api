@@ -24,10 +24,10 @@ def create_role():
                 return response_handler.bad_request(errors)
             else:
                 for i in select_all(Roles):
-                    if json_body['name'] == i.name:
-                        return response_handler.conflict_array('name','Role is Exist')
+                    if json_body['role'] == i.role:
+                        return response_handler.conflict_array('role','Role is Exist')
                     
-            new_role = Roles(name = json_body['name'])
+            new_role = Roles(role = json_body['role'])
                     
             db.session.add(new_role)
             db.session.commit()
@@ -90,16 +90,16 @@ def update_role(id):
                 return response_handler.not_found_array('role','Role not Found')
 
             # Check name of role same with previous or not
-            if json_body['name'] == roles.name: 
-                return response_handler.bad_request_array('name','Your Role Already Updated')
+            if json_body['role'] == roles.role: 
+                return response_handler.bad_request_array('role','Your Role Already Updated')
             else:
-                current_role = filter_by(Roles, 'name', json_body['name'])
+                current_role = filter_by(Roles, 'role', json_body['role'])
                 # Check role same with the others or not
                 if current_role != None: 
-                    return response_handler.conflict_array('name','Role is exist') 
+                    return response_handler.conflict_array('role','Role is exist') 
                 
                 # Add role to db
-                roles.name = json_body['name']  
+                roles.name = json_body['role']  
                 db.session.commit()
                 
                 data = schema.dump(roles)

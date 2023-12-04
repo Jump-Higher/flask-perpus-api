@@ -61,7 +61,7 @@ def borrow(id):
     try:
         current_user = get_jwt_identity()
         if current_user['status'] is False:
-            return response_handler.unautorized_with_message("Please activate your account to borrow book")
+            return response_handler.unautorized_array("status","Please activate your account to borrow book")
         elif current_user['id_role'] in auth('public') and current_user['status'] is True:
             # Check id is UUID or not
             UUID(id)
